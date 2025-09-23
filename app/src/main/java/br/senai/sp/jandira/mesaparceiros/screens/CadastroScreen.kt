@@ -1,7 +1,9 @@
 package br.senai.sp.jandira.mesaparceiros.screens
 
+import android.util.Patterns
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -11,8 +13,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -22,6 +26,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -38,11 +44,19 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import br.senai.sp.jandira.mesaparceiros.R
+import br.senai.sp.jandira.mesaparceiros.model.EmpresaCadastro
+import br.senai.sp.jandira.mesaparceiros.service.RetrofitFactory
 import br.senai.sp.jandira.mesaparceiros.ui.theme.poppinsFamily
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import retrofit2.await
 
 @Composable
-fun CadastroEmpresa(modifier: Modifier = Modifier) {
+fun CadastroEmpresa(navegacao: NavHostController?) {
+    
 
     var nameState by remember {mutableStateOf("")}
     var emailState by remember {mutableStateOf("")}
@@ -50,6 +64,18 @@ fun CadastroEmpresa(modifier: Modifier = Modifier) {
     var telefoneState by remember {mutableStateOf("")}
     var senhaState by remember {mutableStateOf("")}
     var senhaVisivel by remember { mutableStateOf(false) }
+    var isNomeError by remember { mutableStateOf(false) }
+    var isEmailError by remember { mutableStateOf(false) }
+
+    var mostrarMensagemSucesso by remember { mutableStateOf(false) }
+
+    val empresaApi = RetrofitFactory().getEmpresaService()
+
+    fun validar(): Boolean{
+        isNomeError = nameState.length < 3
+        isEmailError = !Patterns.EMAIL_ADDRESS.matcher(emailState).matches()
+        return !isNomeError && !isEmailError
+    }
 
     Box(
         modifier = Modifier
@@ -57,7 +83,8 @@ fun CadastroEmpresa(modifier: Modifier = Modifier) {
             .background(Color(0xFF1B4227))
     ){
         Column(
-            modifier.fillMaxSize()
+            modifier= Modifier
+                .fillMaxSize()
         ){
             Card(
                 modifier = Modifier
@@ -109,6 +136,17 @@ fun CadastroEmpresa(modifier: Modifier = Modifier) {
                                 color = Color(0x99000000)
                             )
                         },
+                        isError = isNomeError,
+                        supportingText = {
+                            if(isNomeError){
+                                Text(text = "Nome é obrigatório e deve ter no mínimo 3 caracters")
+                            }
+                        },
+                        trailingIcon = {
+                            if(isEmailError){
+                                Icon(imageVector = Icons.Default.Info, contentDescription = "")
+                            }
+                        },
                         modifier = Modifier
                             .width(315.dp)
 
@@ -137,6 +175,17 @@ fun CadastroEmpresa(modifier: Modifier = Modifier) {
                                 fontFamily = poppinsFamily,
                                 color = Color(0x99000000)
                             )
+                        },
+                        isError = isEmailError,
+                        supportingText = {
+                            if(isEmailError){
+                                Text(text = "Email é obrigatório")
+                            }
+                        },
+                        trailingIcon = {
+                            if(isEmailError){
+                                Icon(imageVector = Icons.Default.Info, contentDescription = "")
+                            }
                         },
                         modifier = Modifier
                             .width(315.dp)
@@ -242,9 +291,41 @@ fun CadastroEmpresa(modifier: Modifier = Modifier) {
                         modifier = Modifier
                             .width(315.dp)
                     )
+                    Spacer(Modifier.padding(5.dp))
+                    Text(
+                        text = stringResource(R.string.ja_tem_login),
+                        fontSize = 14.sp,
+                        fontFamily = poppinsFamily,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1B4227),
+                        modifier = Modifier
+                            .clickable{navegacao?.navigate("login")}
+                            .align(Alignment.End)
+                            .padding(end = 25.dp)
+                    )
                     Spacer(Modifier.padding(10.dp))
                     Button(
-                        onClick = {},
+                        onClick = {
+                            if (validar()){
+                                val body = EmpresaCadastro(
+                                    nome = nameState,
+                                    email = emailState,
+                                    senha = senhaState,
+                                    cnpjMei = cnpjState,
+                                    telefone = telefoneState
+                                )
+
+                                GlobalScope.launch(Dispatchers.IO){
+                                    val empresaNova = empresaApi.insertEmpresa(body).await()
+                                    mostrarMensagemSucesso = true
+                                    println("deu CERTOOOOOOOO")
+                                }
+
+                            }else{
+                                println("******************** Dados errados")
+                            }
+
+                        },
                         modifier = Modifier
                             .width(230.dp),
                         colors = ButtonDefaults.buttonColors(
@@ -262,11 +343,52 @@ fun CadastroEmpresa(modifier: Modifier = Modifier) {
                 }
             }
         }
+        if (mostrarMensagemSucesso){
+            AlertDialog(
+                onDismissRequest = {
+                    mostrarMensagemSucesso = false
+                },
+                title = {
+                    Text(
+                        text = "Sucesso",
+                        fontSize = 25.sp,
+                        fontFamily = poppinsFamily,
+                        fontWeight =  FontWeight.SemiBold,
+                        color = Color(0xFF1B4227)
+
+                    )
+                },
+                text = {
+                    Text(
+                        text = "Empresa $nameState cadastrado com sucesso!",
+                        fontSize = 15.sp,
+                        fontFamily = poppinsFamily,
+                        color = Color(0x99000000)
+                    )
+                },
+                confirmButton = {},
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            navegacao!!.navigate("login")
+                        }
+                    ){
+                        Text(
+                            text= "Ok",
+                            fontSize = 18.sp,
+                            fontFamily = poppinsFamily,
+                            fontWeight =  FontWeight.SemiBold,
+                            color = Color(0xFF1B4227)
+                        )
+                    }
+                }
+            )
+        }
     }
 }
 
 @Preview
 @Composable
 private fun CadastroEmpresaPreview() {
-    CadastroEmpresa()
+    CadastroEmpresa(null)
 }

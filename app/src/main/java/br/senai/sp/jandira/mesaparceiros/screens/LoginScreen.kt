@@ -2,6 +2,7 @@ package br.senai.sp.jandira.mesaparceiros.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -26,6 +28,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,16 +45,26 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import br.senai.sp.jandira.mesaparceiros.R
+import br.senai.sp.jandira.mesaparceiros.model.EmpresaCadastro
+import br.senai.sp.jandira.mesaparceiros.service.RetrofitFactory
 import br.senai.sp.jandira.mesaparceiros.ui.theme.poppinsFamily
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import retrofit2.await
 
 @Composable
-fun LoginScreen(modifier: Modifier = Modifier) {
+fun LoginScreen(navegacao: NavHostController?) {
 
     var emailState by remember {mutableStateOf("")}
     var senhaState by remember {mutableStateOf("")}
-    var tipoLogin by remember { mutableStateOf("") }
     var senhaVisivel by remember { mutableStateOf(false) }
+
+    val empresaApi = RetrofitFactory().getEmpresaService()
+
+    var mostrarMensagemSucesso by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -66,7 +79,8 @@ fun LoginScreen(modifier: Modifier = Modifier) {
             Image(
                 painter = painterResource(R.drawable.logoclara),
                 contentDescription = "",
-                modifier.padding(10.dp).size(350.dp)
+                modifier = Modifier
+                    .padding(10.dp).size(350.dp)
             )
             Card(
                 modifier = Modifier
@@ -76,7 +90,8 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                 shape = RoundedCornerShape(topStart = 50.dp, topEnd = 50.dp)
             ){
                 Column(
-                    modifier.fillMaxSize().padding(20.dp)
+                    modifier = Modifier
+                        .fillMaxSize().padding(20.dp)
                 ){
                     Spacer(Modifier.padding(5.dp))
                     Text(
@@ -189,11 +204,25 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                             fontSize = 16.sp,
                             fontFamily = poppinsFamily,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1B4227)
+                            color = Color(0xFF1B4227),
+                            modifier = Modifier
+                                .clickable{navegacao?.navigate("cadastro")}
                         )
                     }
                     Button(
-                        onClick = {},
+                        onClick = {
+                            val body = EmpresaCadastro(
+                                email = emailState,
+                                senha = senhaState,
+                                nome = "empresa"
+                            )
+
+                            GlobalScope.launch(Dispatchers.IO){
+                                val empresaNova = empresaApi.loginEmpresa(body).await()
+                                mostrarMensagemSucesso = true
+                                println("deu CERTOOOOOOOO")
+                            }
+                        },
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
                             .padding(top = 30.dp)
@@ -211,11 +240,52 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                 }
             }
         }
+        if (mostrarMensagemSucesso){
+            AlertDialog(
+                onDismissRequest = {
+                    mostrarMensagemSucesso = false
+                },
+                title = {
+                    Text(
+                        text = "Sucesso",
+                        fontSize = 25.sp,
+                        fontFamily = poppinsFamily,
+                        fontWeight =  FontWeight.SemiBold,
+                        color = Color(0xFF1B4227)
+
+                    )
+                },
+                text = {
+                    Text(
+                        text = "Bem vindo ao nosso App!",
+                        fontSize = 15.sp,
+                        fontFamily = poppinsFamily,
+                        color = Color(0x99000000)
+                    )
+                },
+                confirmButton = {},
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            navegacao!!.navigate("splash")
+                        }
+                    ){
+                        Text(
+                            text= "Ok",
+                            fontSize = 18.sp,
+                            fontFamily = poppinsFamily,
+                            fontWeight =  FontWeight.SemiBold,
+                            color = Color(0xFF1B4227)
+                        )
+                    }
+                }
+            )
+        }
     }
 }
 
 @Preview
 @Composable
 private fun LoginScreenPreview() {
-    LoginScreen()
+    LoginScreen(null)
 }

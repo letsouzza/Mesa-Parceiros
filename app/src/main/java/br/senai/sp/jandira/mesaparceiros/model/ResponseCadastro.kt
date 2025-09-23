@@ -6,5 +6,5 @@ data class ResponseCadastro(
     var status: Boolean = false,
     var statusCode: Int = 0,
     var message: String = "",
-    var usuario: List<EmpresaCadastro>
+    var usuario: UsuarioResponsePost
 )

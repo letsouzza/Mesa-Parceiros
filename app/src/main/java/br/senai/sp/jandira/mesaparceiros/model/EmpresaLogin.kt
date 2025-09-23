@@ -5,5 +5,5 @@ import com.google.gson.annotations.SerializedName
 data class EmpresaLogin(
     var email: String = "",
     var senha: String = "",
-    @SerializedName("tipo_usuario") var tipoUsuario: String = "empresa",
+    @SerializedName("nome") var tipoUsuario: String = "empresa",
 )
