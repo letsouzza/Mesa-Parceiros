@@ -34,7 +34,7 @@ val errorContainerLight = Color(0xFFFFDAD6)
 val onErrorContainerLight = Color(0xFF93000A)
 
 val backgroundLight = Color(0xFFFFF9EB)       // Fundo claro levemente bege
-val onBackgroundLight = Color(0xFF181D18)
+val onBackgroundLight = Color(0xFF1B4227)
 
 
 
@@ -60,5 +60,5 @@ val onErrorDark = Color(0xFF690005)
 val errorContainerDark = Color(0xFF93000A)
 val onErrorContainerDark = Color(0xFFFFDAD6)
 
-val backgroundDark = Color(0xCC1B4227)        // Fundo escuro esverdeado
+val backgroundDark = Color(0xFF1B4227)        // Fundo escuro esverdeado
 val onBackgroundDark = Color(0xFFDFE4DC)

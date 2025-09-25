@@ -13,4 +13,12 @@
     <string name="nao_tem_login">Não tem Login?</string>
     <string name="ja_tem_login">Já tem um Login?</string>
     <string name="entrar">Entrar</string>
+    <string name="cadastro_alimento">Cadastrar Alimento</string>
+    <string name="descricao">Descrição:</string>
+    <string name="categoria">Categoria:</string>
+    <string name="proximo">Próximo</string>
+    <string name="foto">Foto:</string>
+    <string name="quantidade">Quantidade</string>
+    <string name="prazo">Prazo de validade:</string>
+    <string name="peso">Peso:</string>
 </resources>
