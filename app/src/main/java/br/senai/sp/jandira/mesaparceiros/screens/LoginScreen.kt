@@ -47,7 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import br.senai.sp.jandira.mesaparceiros.R
-import br.senai.sp.jandira.mesaparceiros.model.EmpresaCadastro
+import br.senai.sp.jandira.mesaparceiros.model.EmpresaLogin
 import br.senai.sp.jandira.mesaparceiros.service.RetrofitFactory
 import br.senai.sp.jandira.mesaparceiros.ui.theme.poppinsFamily
 import kotlinx.coroutines.Dispatchers
@@ -211,10 +211,10 @@ fun LoginScreen(navegacao: NavHostController?) {
                     }
                     Button(
                         onClick = {
-                            val body = EmpresaCadastro(
+                            val body = EmpresaLogin(
                                 email = emailState,
                                 senha = senhaState,
-                                nome = "empresa"
+                                tipo = "empresa"
                             )
 
                             GlobalScope.launch(Dispatchers.IO){
@@ -247,7 +247,7 @@ fun LoginScreen(navegacao: NavHostController?) {
                 },
                 title = {
                     Text(
-                        text = "Sucesso",
+                        text = "Mesa+ Parceiros",
                         fontSize = 25.sp,
                         fontFamily = poppinsFamily,
                         fontWeight =  FontWeight.SemiBold,
