@@ -1,6 +1,5 @@
 package br.senai.sp.jandira.mesaparceiros.screens
 
-import android.util.Patterns
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,14 +15,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,7 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import br.senai.sp.jandira.mesaparceiros.R
-import br.senai.sp.jandira.mesaparceiros.model.RecuperarSenha
+import br.senai.sp.jandira.mesaparceiros.model.CodigoRecuperacao
 import br.senai.sp.jandira.mesaparceiros.screens.components.BarraInferior
 import br.senai.sp.jandira.mesaparceiros.service.RetrofitFactory
 import br.senai.sp.jandira.mesaparceiros.ui.theme.poppinsFamily
@@ -51,19 +48,12 @@ import kotlinx.coroutines.launch
 import retrofit2.await
 
 @Composable
-fun RecuperacaoSenha(navegacao: NavHostController?) {
+fun CodigoSenha(navegacao: NavHostController?) {
 
     var controleNavegacao = rememberNavController()
-    var emailState by remember {mutableStateOf("")}
-    var isEmailError by remember { mutableStateOf(false) }
-    var mostrarMensagemSucesso by remember { mutableStateOf(false) }
+    var codigoState by remember {mutableStateOf("")}
 
     val senhaApi = RetrofitFactory().getSenhaService()
-
-    fun validar(): Boolean{
-        isEmailError = !Patterns.EMAIL_ADDRESS.matcher(emailState).matches()
-        return !isEmailError
-    }
 
     Box(
         modifier = Modifier
@@ -105,63 +95,72 @@ fun RecuperacaoSenha(navegacao: NavHostController?) {
                         modifier= Modifier
                             .padding(start = 20.dp)
                     )
-                    BasicTextField(
-                        value = emailState,
-                        onValueChange = { emailState = it },
-                        singleLine = true,
-                        textStyle = LocalTextStyle.current.copy(
-                            color = Color.Black,
-                            fontSize = 16.sp,
-                            fontFamily = poppinsFamily
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 15.dp)
-                            .border(
-                                width = 3.dp,
-                                color = Color(0xFFFFE6B1),
-                                shape = RoundedCornerShape(30.dp)
-                            )
-                            .background(Color.White, shape = RoundedCornerShape(30.dp))
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        decorationBox = { innerTextField ->
-                            Box(
-                                modifier = Modifier.fillMaxWidth(),
-                                contentAlignment = Alignment.CenterStart
-                            ) {
-                                if (emailState.isEmpty()) {
-                                    Text(
-                                        text = "Email",
-                                        fontSize = 20.sp,
-                                        fontFamily = poppinsFamily,
-                                        color = Color(0x99000000)
-                                    )
+                    Column {
+                        BasicTextField(
+                            value = codigoState,
+                            onValueChange = { codigoState = it },
+                            singleLine = true,
+                            textStyle = LocalTextStyle.current.copy(
+                                color = Color.Black,
+                                fontSize = 16.sp,
+                                fontFamily = poppinsFamily
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 15.dp)
+                                .border(
+                                    width = 3.dp,
+                                    color = Color(0xFFFFE6B1),
+                                    shape = RoundedCornerShape(30.dp)
+                                )
+                                .background(Color.White, shape = RoundedCornerShape(30.dp))
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            decorationBox = { innerTextField ->
+                                Box(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    contentAlignment = Alignment.CenterStart
+                                ) {
+                                    if (codigoState.isEmpty()) {
+                                        Text(
+                                            text = stringResource(R.string.codigo),
+                                            fontSize = 20.sp,
+                                            fontFamily = poppinsFamily,
+                                            color = Color(0x99000000)
+                                        )
+                                    }
+                                    innerTextField()
                                 }
-                                innerTextField()
                             }
-                        }
-                    )
+                        )
+                        Text(
+                            text = stringResource(R.string.reenviar_codigo),
+                            fontSize = 16.sp,
+                            fontFamily = poppinsFamily,
+                            fontWeight = FontWeight.Bold,
+                            color= Color(0x99000000),
+                            modifier = Modifier
+                                .padding(start = 30.dp, top = 10.dp)
+                        )
+                    }
                     Button(
                         onClick = {
-                            val body = RecuperarSenha(
-                                email = emailState,
-                                tipo = "pessoa"
+                            val body = CodigoRecuperacao(
+                                codigo = codigoState,
                             )
 
                             GlobalScope.launch(Dispatchers.IO){
-                                val recuperar = senhaApi.sendEmail(body).await()
-                                mostrarMensagemSucesso = true
+                                val codigo = senhaApi.sendCodigo(body).await()
                                 println("deu CERTOOOOOOOO")
                             }
                         },
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
                             .padding(top = 30.dp)
-                            .width(180.dp),
+                            .width(210.dp),
                         colors = ButtonDefaults.buttonColors(Color(0xFF1B4227))
                     ) {
                         Text(
-                            text = stringResource(R.string.recuperar),
+                            text = stringResource(R.string.validar_codigo),
                             fontSize = 20.sp,
                             fontFamily = poppinsFamily,
                             color = Color.White
@@ -172,52 +171,11 @@ fun RecuperacaoSenha(navegacao: NavHostController?) {
                 }
             }
         }
-        if (mostrarMensagemSucesso){
-            AlertDialog(
-                onDismissRequest = {
-                    mostrarMensagemSucesso = false
-                },
-                title = {
-                    Text(
-                        text = "Aviso",
-                        fontSize = 25.sp,
-                        fontFamily = poppinsFamily,
-                        fontWeight =  FontWeight.SemiBold,
-                        color = Color(0xFF1B4227)
-
-                    )
-                },
-                text = {
-                    Text(
-                        text = "Código enviado para seu email!",
-                        fontSize = 15.sp,
-                        fontFamily = poppinsFamily,
-                        color = Color(0x99000000)
-                    )
-                },
-                confirmButton = {},
-                dismissButton = {
-                    TextButton(
-                        onClick = {
-                            navegacao!!.navigate("codigo")
-                        }
-                    ){
-                        Text(
-                            text= "Ok",
-                            fontSize = 18.sp,
-                            fontFamily = poppinsFamily,
-                            fontWeight =  FontWeight.SemiBold,
-                            color = Color(0xFF1B4227)
-                        )
-                    }
-                }
-            )
-        }
     }
 }
 
 @Preview
 @Composable
-private fun RecuperacaoSenhaPreview() {
-    RecuperacaoSenha(null)
+private fun CodigoSenhaPreview() {
+    CodigoSenha(null)
 }
