@@ -21,4 +21,6 @@
     <string name="quantidade">Quantidade</string>
     <string name="prazo">Prazo de validade:</string>
     <string name="peso">Peso:</string>
+    <string name="recuperacao_senha">Recuperação de Senha</string>
+    <string name="recuperar">Recuperar</string>
 </resources>
