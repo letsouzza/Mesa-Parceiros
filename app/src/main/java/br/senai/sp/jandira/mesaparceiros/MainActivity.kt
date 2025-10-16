@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import br.senai.sp.jandira.mesaparceiros.screens.AtualizacaoSenha
 import br.senai.sp.jandira.mesaparceiros.screens.CadastroAlimentoPrimeiro
+import br.senai.sp.jandira.mesaparceiros.screens.CadastroAlimentoSegundo
 import br.senai.sp.jandira.mesaparceiros.screens.CadastroEmpresa
 import br.senai.sp.jandira.mesaparceiros.screens.CodigoSenha
 import br.senai.sp.jandira.mesaparceiros.screens.LoginScreen
@@ -25,7 +26,7 @@ class MainActivity : ComponentActivity() {
                 val navegacao = rememberNavController()
                 NavHost(
                     navController = navegacao,
-                    startDestination = "splash"
+                    startDestination = "cadastroAlimento"
                 ){
                     composable(route = "login"){ LoginScreen(navegacao)}
                     composable(route = "cadastro"){ CadastroEmpresa(navegacao)}
@@ -33,7 +34,8 @@ class MainActivity : ComponentActivity() {
                     composable(route = "recuperacao"){ RecuperacaoSenha(navegacao) }
                     composable(route = "codigo"){ CodigoSenha(navegacao) }
                     composable(route = "atualizarSenha"){ AtualizacaoSenha(navegacao) }
-                    composable(route = "cadastroAlimento"){ CadastroAlimentoPrimeiro() }
+                    composable(route = "cadastroAlimento1"){ CadastroAlimentoPrimeiro(navegacao) }
+                    composable(route = "cadastroAlimento2"){ CadastroAlimentoSegundo(navegacao) }
                 }
             }
         }

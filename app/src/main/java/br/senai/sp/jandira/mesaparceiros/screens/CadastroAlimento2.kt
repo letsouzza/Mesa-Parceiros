@@ -1,7 +1,13 @@
 package br.senai.sp.jandira.mesaparceiros.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,9 +16,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowCircleLeft
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -24,22 +40,43 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import br.senai.sp.jandira.mesaparceiros.R
+import br.senai.sp.jandira.mesaparceiros.screens.components.BarraInferior
+import br.senai.sp.jandira.mesaparceiros.ui.theme.MesaParceirosTheme
 import br.senai.sp.jandira.mesaparceiros.ui.theme.poppinsFamily
+import coil.compose.AsyncImage
 
 @Composable
-fun CadastroAlimentoSegundo() {
+fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
 
+    // 1) Estado para armazenar o URI da imagem escolhida
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+
+    // 2) Estado para armazenar a URL retornada pelo Azure
+    var imageUrl by remember { mutableStateOf<String?>(null) }
+
+    // 3) Launcher para pegar o arquivo via Galeria
+    val pickImageLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            imageUri = uri
+        }
+
+    var imageState by remember { mutableStateOf("") }
     var quantidadeState by remember { mutableStateOf("") }
     var prazoState by remember { mutableStateOf("") }
     var pesoState by remember { mutableStateOf("") }
+    var controleNavegacao = rememberNavController()
 
 
     Box(
@@ -67,6 +104,7 @@ fun CadastroAlimentoSegundo() {
                     fontSize = 36.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.background,
+                    lineHeight = 42.sp,
                     modifier = Modifier
                         .padding(start = 10.dp)
                 )
@@ -86,34 +124,38 @@ fun CadastroAlimentoSegundo() {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(vertical = 30.dp, horizontal = 15.dp)
                     ){
-                        OutlinedTextField(
-                            value = "",
-                            onValueChange = {},
-                            colors = OutlinedTextFieldDefaults.colors(
-                                unfocusedContainerColor = Color(0xFFFFFFFF),
-                                focusedContainerColor = Color(0xFFFFFFFF),
-                                unfocusedBorderColor = Color(0xFF1B4227),
-                                focusedBorderColor = Color(0xFF1B4227),
-                                focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black
-                            ),
-                            shape = RoundedCornerShape(30.dp),
-                            label = {
-                                Text(
-                                    text = stringResource(
-                                        R.string.foto
-                                    ),
-                                    fontSize = 20.sp,
-                                    fontFamily = poppinsFamily,
-                                    color = Color(0x99000000)
-                                )
-                            },
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(200.dp)
-                        )
+                                .padding(horizontal = 15.dp)
+                                .padding(top = 30.dp)
+                                .height(210.dp)
+                                .border(0.8.dp, Color(0xFF1B4227), RoundedCornerShape(35.dp))
+                                .background(Color.White, RoundedCornerShape(35.dp))
+                                .clickable { pickImageLauncher.launch("image/*") }
+                        ) {
+                            if (imageUri == null) {
+                                Text(
+                                    text = "Foto:",
+                                    modifier = Modifier
+                                        .padding(start = 20.dp, top = 15.dp),
+                                    fontSize = 20.sp,
+                                    fontFamily = poppinsFamily,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0x99000000)
+                                )
+                            } else {
+                                AsyncImage(
+                                    model = imageUri,
+                                    contentDescription = "Imagem Selecionada",
+                                    contentScale = ContentScale.FillBounds,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(RoundedCornerShape(35.dp))
+                                )
+                            }
+                        }
                         Spacer(Modifier.padding(top = 10.dp))
                         OutlinedTextField(
                             value = quantidadeState,
@@ -139,6 +181,7 @@ fun CadastroAlimentoSegundo() {
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .padding(horizontal = 15.dp)
                         )
                         Spacer(Modifier.padding(top = 10.dp))
                         OutlinedTextField(
@@ -165,6 +208,7 @@ fun CadastroAlimentoSegundo() {
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .padding(horizontal = 15.dp)
                         )
                         Spacer(Modifier.padding(top = 10.dp))
                         OutlinedTextField(
@@ -191,8 +235,49 @@ fun CadastroAlimentoSegundo() {
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .padding(horizontal = 15.dp)
                         )
-
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 15.dp)
+                                .padding(top = 15.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ){
+                            IconButton(
+                                onClick = { /* ação */ },
+                                modifier = Modifier
+                                    .padding(5.dp)
+                                    .size(40.dp)
+                                    .background(Color(0xFFFFDA8B), shape = CircleShape) // fundo amarelo claro
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowBack, // seta simples
+                                    contentDescription = "",
+                                    tint = Color.Black, // cor da seta
+                                    modifier = Modifier
+                                        .size(30.dp)
+                                )
+                            }
+                            Button(
+                                onClick = {},
+                                colors = ButtonDefaults.buttonColors(Color(0xFFFFDA8B))
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.cadastrar),
+                                    fontSize = 20.sp,
+                                    fontFamily = poppinsFamily,
+                                    color = Color.Black
+                                )
+                            }
+                        }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize(),
+                            verticalArrangement = Arrangement.Bottom
+                        ){
+                            BarraInferior(controleNavegacao)
+                        }
                     }
                 }
             }
@@ -203,5 +288,7 @@ fun CadastroAlimentoSegundo() {
 @Preview
 @Composable
 private fun CadastroAlimentoSegundoPreview() {
-    CadastroAlimentoSegundo()
+    MesaParceirosTheme {
+        CadastroAlimentoSegundo(null)
+    }
 }
