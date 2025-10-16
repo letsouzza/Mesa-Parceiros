@@ -48,8 +48,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import br.senai.sp.jandira.mesaparceiros.ui.theme.MesaParceirosTheme
 import br.senai.sp.jandira.mesaparceiros.R
+import br.senai.sp.jandira.mesaparceiros.model.ResultCategoria
 import br.senai.sp.jandira.mesaparceiros.screens.components.BarraInferior
+import br.senai.sp.jandira.mesaparceiros.service.RetrofitFactory
 import br.senai.sp.jandira.mesaparceiros.ui.theme.poppinsFamily
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import kotlin.collections.set
 
 @Composable
 fun CadastroAlimentoPrimeiro(navegacao: NavHostController?) {
@@ -58,6 +64,21 @@ fun CadastroAlimentoPrimeiro(navegacao: NavHostController?) {
     var descricao by remember { mutableStateOf("") }
     var categoria by remember { mutableStateOf("") }
     var controleNavegacao = rememberNavController()
+
+////    var categoryList by remember { mutableStateOf(listOf<Categoria>()) }
+//
+//    var callCategory = RetrofitFactory()
+//        .getCategoryService()
+//        .listCategoria()
+//
+//    callCategory.enqueue(object : Callback<ResultCategoria> {
+//        override fun onResponse(p0: Call<ResultCategoria>, response: Response<ResultCategoria>) {
+//            categoryList = response.body()!!.categorias
+//        }
+//        override fun onFailure(p0: Call<ResultCategoria>, p1: Throwable) {
+//            TODO("Not yet implemented")
+//        }
+//    })
 
 
     MesaParceirosTheme {
@@ -172,28 +193,45 @@ fun CadastroAlimentoPrimeiro(navegacao: NavHostController?) {
                                     color = Color(0xFF1B4227),
                                     modifier = Modifier.padding(top = 20.dp)
                                 )
-                            }
+//                                Column {
+//                                    categoryList.forEach { categoria ->
+//                                        val isChecked = checkedStates[categoria.id] ?: false
+//
+//                                        CategoryCheck(
+//                                            checkedText = categoria.categoria,
+//                                            check = isChecked,
+//                                            onCategoriaSelecionada = {
+//                                                checkedStates[categoria.id] = !isChecked
+//                                            }
+//                                        )
+//                                    }
+//                                }
 
-                            // Botão Próximo
-                            Button(
-                                onClick = { /* ação */ },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFDA8B)),
-                                modifier = Modifier
-                                    .fillMaxWidth(0.5f)
-                                    .align(Alignment.CenterHorizontally)
-                                    .clip(RoundedCornerShape(5.dp))
-                                    .padding(bottom = 15.dp) // pequeno espaçamento da barra
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.proximo),
-                                    fontSize = 20.sp,
-                                    fontFamily = poppinsFamily,
-                                    color = Color.Black
-                                )
-                            }
+                                // Botão Próximo
+                                Button(
+                                    onClick = { /* ação */ },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(
+                                            0xFFFFDA8B
+                                        )
+                                    ),
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.5f)
+                                        .align(Alignment.CenterHorizontally)
+                                        .clip(RoundedCornerShape(5.dp))
+                                        .padding(bottom = 15.dp) // pequeno espaçamento da barra
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.proximo),
+                                        fontSize = 20.sp,
+                                        fontFamily = poppinsFamily,
+                                        color = Color.Black
+                                    )
+                                }
 
-                            // Barra inferior fixa
-                            BarraInferior(controleNavegacao)
+                                // Barra inferior fixa
+                                BarraInferior(controleNavegacao)
+                            }
                         }
                     }
                 }

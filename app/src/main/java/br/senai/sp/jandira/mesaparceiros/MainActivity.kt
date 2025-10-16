@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
                 val navegacao = rememberNavController()
                 NavHost(
                     navController = navegacao,
-                    startDestination = "cadastroAlimento"
+                    startDestination = "splash"
                 ){
                     composable(route = "login"){ LoginScreen(navegacao)}
                     composable(route = "cadastro"){ CadastroEmpresa(navegacao)}

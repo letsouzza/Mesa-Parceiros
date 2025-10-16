@@ -1,10 +1,10 @@
 package br.senai.sp.jandira.mesaparceiros.service
 
 import br.senai.sp.jandira.mesaparceiros.model.CodigoRecuperacao
+import br.senai.sp.jandira.mesaparceiros.model.EsqueciSenha
 import br.senai.sp.jandira.mesaparceiros.model.RecuperarSenha
 import br.senai.sp.jandira.mesaparceiros.model.ResponseCadastro
 import br.senai.sp.jandira.mesaparceiros.model.ResponseGeral
-import br.senai.sp.jandira.mesaparceiros.model.UsuarioResponsePost
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.Headers
@@ -22,6 +22,6 @@ interface SenhaService {
     fun sendCodigo(@Body codigo: CodigoRecuperacao): Call<ResponseGeral>
 
     @Headers("Content-Type: application/json")
-    @PUT("atualizar-senha")
-    fun atualizarSenha(@Body senha: UsuarioResponsePost): Call<ResponseCadastro>
+    @PUT("nova-senha")
+    fun atualizarSenha(@Body senha: EsqueciSenha): Call<ResponseGeral>
 }

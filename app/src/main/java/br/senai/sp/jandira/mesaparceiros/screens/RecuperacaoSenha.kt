@@ -1,5 +1,6 @@
 package br.senai.sp.jandira.mesaparceiros.screens
 
+import android.content.Context
 import android.util.Patterns
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -32,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -41,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import br.senai.sp.jandira.mesaparceiros.R
+import br.senai.sp.jandira.mesaparceiros.model.CodigoRecuperacao
 import br.senai.sp.jandira.mesaparceiros.model.RecuperarSenha
 import br.senai.sp.jandira.mesaparceiros.screens.components.BarraInferior
 import br.senai.sp.jandira.mesaparceiros.service.RetrofitFactory
@@ -55,6 +58,7 @@ fun RecuperacaoSenha(navegacao: NavHostController?) {
 
     var controleNavegacao = rememberNavController()
     var emailState by remember {mutableStateOf("")}
+    var tipoState: String = "empresa"
     var isEmailError by remember { mutableStateOf(false) }
     var mostrarMensagemSucesso by remember { mutableStateOf(false) }
 
@@ -64,6 +68,10 @@ fun RecuperacaoSenha(navegacao: NavHostController?) {
         isEmailError = !Patterns.EMAIL_ADDRESS.matcher(emailState).matches()
         return !isEmailError
     }
+
+    val context = LocalContext.current
+    val userFile = context.getSharedPreferences("user_file", Context.MODE_PRIVATE)
+    val editor = userFile.edit()
 
     Box(
         modifier = Modifier
@@ -145,7 +153,7 @@ fun RecuperacaoSenha(navegacao: NavHostController?) {
                         onClick = {
                             val body = RecuperarSenha(
                                 email = emailState,
-                                tipo = "pessoa"
+                                tipo = tipoState,
                             )
 
                             GlobalScope.launch(Dispatchers.IO){
@@ -153,6 +161,10 @@ fun RecuperacaoSenha(navegacao: NavHostController?) {
                                 mostrarMensagemSucesso = true
                                 println("deu CERTOOOOOOOO")
                             }
+
+                            editor.putString("email", emailState)
+                            editor.putString("tipo", tipoState)
+                            editor.apply()
                         },
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
