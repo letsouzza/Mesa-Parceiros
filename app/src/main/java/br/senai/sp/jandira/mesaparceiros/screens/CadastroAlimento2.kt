@@ -1,6 +1,9 @@
 package br.senai.sp.jandira.mesaparceiros.screens
 
+import android.content.Context
 import android.net.Uri
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -43,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -52,10 +56,22 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import br.senai.sp.jandira.mesaparceiros.R
+import br.senai.sp.jandira.mesaparceiros.model.Alimento
+import br.senai.sp.jandira.mesaparceiros.model.Categoria
+import br.senai.sp.jandira.mesaparceiros.model.ResponseGeral
 import br.senai.sp.jandira.mesaparceiros.screens.components.BarraInferior
+import br.senai.sp.jandira.mesaparceiros.service.AzureUploadService.uploadImageToAzure
+import br.senai.sp.jandira.mesaparceiros.service.RetrofitFactory
 import br.senai.sp.jandira.mesaparceiros.ui.theme.MesaParceirosTheme
 import br.senai.sp.jandira.mesaparceiros.ui.theme.poppinsFamily
 import coil.compose.AsyncImage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 @Composable
 fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
@@ -77,6 +93,13 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
     var prazoState by remember { mutableStateOf("") }
     var pesoState by remember { mutableStateOf("") }
     var controleNavegacao = rememberNavController()
+
+    val context = LocalContext.current
+    val userFile = context.getSharedPreferences("user_file", Context.MODE_PRIVATE)
+    val titulo = userFile.getString("titulo", "")
+    val descricao = userFile.getString("descricao", "")
+    val categoriasString = userFile.getString("categorias", "") ?: ""
+    val categoriasList = categoriasString.split(",").mapNotNull { it.toIntOrNull() }
 
 
     Box(
@@ -149,7 +172,7 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
                                 AsyncImage(
                                     model = imageUri,
                                     contentDescription = "Imagem Selecionada",
-                                    contentScale = ContentScale.FillBounds,
+                                    contentScale = ContentScale.Crop,
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .clip(RoundedCornerShape(35.dp))
@@ -159,7 +182,7 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
                         Spacer(Modifier.padding(top = 10.dp))
                         OutlinedTextField(
                             value = quantidadeState,
-                            onValueChange = {},
+                            onValueChange = {quantidadeState = it},
                             colors = OutlinedTextFieldDefaults.colors(
                                 unfocusedContainerColor = Color(0xFFFFFFFF),
                                 focusedContainerColor = Color(0xFFFFFFFF),
@@ -186,7 +209,7 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
                         Spacer(Modifier.padding(top = 10.dp))
                         OutlinedTextField(
                             value = prazoState,
-                            onValueChange = {},
+                            onValueChange = {prazoState = it},
                             colors = OutlinedTextFieldDefaults.colors(
                                 unfocusedContainerColor = Color(0xFFFFFFFF),
                                 focusedContainerColor = Color(0xFFFFFFFF),
@@ -213,7 +236,7 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
                         Spacer(Modifier.padding(top = 10.dp))
                         OutlinedTextField(
                             value = pesoState,
-                            onValueChange = {},
+                            onValueChange = {pesoState = it},
                             colors = OutlinedTextFieldDefaults.colors(
                                 unfocusedContainerColor = Color(0xFFFFFFFF),
                                 focusedContainerColor = Color(0xFFFFFFFF),
@@ -245,7 +268,9 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
                             horizontalArrangement = Arrangement.SpaceBetween
                         ){
                             IconButton(
-                                onClick = { /* ação */ },
+                                onClick = {
+                                    navegacao!!.navigate("cadastroAlimento1")
+                                },
                                 modifier = Modifier
                                     .padding(5.dp)
                                     .size(40.dp)
@@ -260,7 +285,72 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
                                 )
                             }
                             Button(
-                                onClick = {},
+                                onClick = {
+                                    // 1) Executa a rotina de upload em background
+                                    CoroutineScope(Dispatchers.IO).launch {
+                                        try {
+                                            // 2) Chama a sua função de upload e aguarda a URL
+                                            val urlRetornada = uploadImageToAzure(context, imageUri!!)
+
+                                            val categoriasJsonList = categoriasList.map {
+                                                Categoria(
+                                                    it
+                                                )
+                                            }
+
+                                            val body = Alimento(
+                                                nome = "$titulo",
+                                                quantidade = quantidadeState,
+                                                prazo = prazoState,
+                                                descricao = "$descricao",
+                                                peso = pesoState,
+                                                imagem = "$urlRetornada",
+                                                idEmpresa = 1,
+                                                categoria = categoriasJsonList
+                                            )
+                                            Log.d("lara", "$body")
+
+                                            val sendAlimento = RetrofitFactory()
+                                                .getAlimentoService()
+                                                .insertAlimento(body)
+
+                                            sendAlimento.enqueue(object : Callback<ResponseGeral> {
+                                                override fun onResponse(
+                                                    call: Call<ResponseGeral>,
+                                                    response: Response<ResponseGeral>
+                                                ) {
+                                                    if (response.isSuccessful) {
+                                                        Toast.makeText(
+                                                            context,
+                                                            "Cadastro OK: ${response.body()?.message}",
+                                                            Toast.LENGTH_LONG
+                                                        ).show()
+                                                        navegacao?.navigate("home1")
+                                                    } else {
+                                                        Toast.makeText(
+                                                            context,
+                                                            "Erro no servidor: código ${response.code()}",
+                                                            Toast.LENGTH_LONG
+                                                        ).show()
+                                                    }
+                                                }
+
+                                                override fun onFailure(p0: Call<ResponseGeral>, p1: Throwable) {
+                                                    Log.e("Erro", "Não foi possível cadastrar")
+                                                }
+                                            })
+                                            // 3) Volta na Main e guarda a URL num estado para usar depois
+                                            withContext(Dispatchers.Main) {
+                                                imageUrl = urlRetornada
+                                            }
+                                        } catch (e: Exception) {
+                                            Log.e("ExemploEnvio", "Falha no upload: ${e.message}")
+                                            withContext(Dispatchers.Main) {
+                                                Toast.makeText(context, "Erro no upload", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    }
+                                },
                                 colors = ButtonDefaults.buttonColors(Color(0xFFFFDA8B))
                             ) {
                                 Text(

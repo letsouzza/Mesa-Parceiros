@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,14 +55,17 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import br.senai.sp.jandira.mesaparceiros.R
 import br.senai.sp.jandira.mesaparceiros.model.EsqueciSenha
+import br.senai.sp.jandira.mesaparceiros.model.ResponseGeral
 import br.senai.sp.jandira.mesaparceiros.screens.components.BarraInferior
 import br.senai.sp.jandira.mesaparceiros.service.RetrofitFactory
 import br.senai.sp.jandira.mesaparceiros.ui.theme.poppinsFamily
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import retrofit2.Response
 import retrofit2.await
+
 
 @Composable
 fun AtualizacaoSenha(navegacao: NavHostController?) {
@@ -85,6 +89,8 @@ fun AtualizacaoSenha(navegacao: NavHostController?) {
     fun validarSenhas(): Boolean {
         return novaSenhaState.isNotEmpty() && confirmarSenhaState.isNotEmpty() && (novaSenhaState == confirmarSenhaState)
     }
+
+    val scope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
@@ -271,15 +277,33 @@ fun AtualizacaoSenha(navegacao: NavHostController?) {
                                 )
 
                                 GlobalScope.launch(Dispatchers.IO) {
-                                    val response = senhaApi.atualizarSenha(body)
-                                    mostrarMensagemSucesso = true
-                                    println("Senha atualizada com SUCESSO!")
+                                    try {
+                                        // 1. Chamar a API e AGUARDAR o resultado
+                                        val response = senhaApi.atualizarSenha(body).await()
 
+                                        println(response.message)
+                                        // 2. Mudar para o thread principal para atualizar o estado da UI
+                                        if (response.message == "Item atualizado com sucesso!!") {
+                                            // Certifique-se de usar `withContext(Dispatchers.Main)` ou `launch(Dispatchers.Main)` para atualizar o estado da UI
+                                            withContext(Dispatchers.Main) {
+                                                mostrarMensagemSucesso = true
+                                                // console log para debug
+                                                println("Senha atualizada com SUCESSO! Mensagem: ${response.message}")
+                                            }
+                                        } else {
+                                            // Tratar falha da API (ex: senha muito curta, usuário não encontrado)
+                                            withContext(Dispatchers.Main) {
+                                                // Aqui você pode adicionar um estado de erro (e.g., isAPIError)
+                                                println("Falha na atualização de senha. Status: ${response.statusCode}")
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        // Tratar erros de rede ou exceções gerais
+                                        withContext(Dispatchers.Main) {
+                                            println("Erro ao conectar ou processar: ${e.message}")
+                                        }
+                                    }
                                 }
-                            }else {
-                                // Senhas não são iguais ou estão vazias
-                                isSenhaError = true // Define o estado para exibir a mensagem de erro
-                                println("Senhas não compatíveis ou campos vazios")
                             }
                         },
                         modifier = Modifier

@@ -268,7 +268,7 @@ fun LoginScreen(navegacao: NavHostController?) {
                 dismissButton = {
                     TextButton(
                         onClick = {
-                            navegacao!!.navigate("splash")
+                            navegacao!!.navigate("cadastroAlimento1")
                         }
                     ){
                         Text(
