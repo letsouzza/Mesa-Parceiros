@@ -1,10 +1,8 @@
 package br.senai.sp.jandira.mesaparceiros.screens
 
 import android.content.Context
-import android.database.Cursor
 import android.net.Uri
 import android.util.Log
-import android.view.PointerIcon
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -45,7 +43,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -58,7 +55,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import br.senai.sp.jandira.mesaparceiros.R
 import br.senai.sp.jandira.mesaparceiros.model.Alimento
-import br.senai.sp.jandira.mesaparceiros.model.Categoria
 import br.senai.sp.jandira.mesaparceiros.model.ResponseGeral
 import br.senai.sp.jandira.mesaparceiros.screens.components.BarraInferior
 import br.senai.sp.jandira.mesaparceiros.service.AzureUploadService.uploadImageToAzure
@@ -74,6 +70,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import androidx.compose.material.icons.filled.CloudUpload
+import br.senai.sp.jandira.mesaparceiros.model.Categoria
 
 @Composable
 fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
@@ -100,8 +97,11 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
     val userFile = context.getSharedPreferences("user_file", Context.MODE_PRIVATE)
     val titulo = userFile.getString("titulo", "")
     val descricao = userFile.getString("descricao", "")
+    val idUser = userFile.getInt("id", 0)
     val categoriasString = userFile.getString("categorias", "") ?: ""
     val categoriasList = categoriasString.split(",").mapNotNull { it.toIntOrNull() }
+
+    var mostrarMensagemSucesso by remember { mutableStateOf(false) }
 
 
     Box(
@@ -314,10 +314,10 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
                                                 quantidade = quantidadeState,
                                                 prazo = prazoState,
                                                 descricao = "$descricao",
-//                                                peso = pesoState,
+                                                peso = pesoState,
                                                 imagem = "$urlRetornada",
-                                                idEmpresa = 2,
-                                                categoria = categoriasJsonList
+                                                idEmpresa = idUser,
+                                                categorias = categoriasJsonList
                                             )
                                             Log.d("lara", "$body")
 
@@ -343,7 +343,7 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
                                                             "Erro no servidor: código ${response.code()}",
                                                             Toast.LENGTH_LONG
                                                         ).show()
-                                                        println("erro ${response.message()}")
+                                                        println("erro ${response}")
                                                     }
 
                                                 }

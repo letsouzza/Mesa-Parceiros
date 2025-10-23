@@ -299,7 +299,6 @@ fun AtualizacaoSenha(navegacao: NavHostController?) {
                     Button(
                         onClick = {
                             if (validarSenhas()) {
-                                isSenhaError = false
 
                                 val body = EsqueciSenha(
                                     email = "$emailState",

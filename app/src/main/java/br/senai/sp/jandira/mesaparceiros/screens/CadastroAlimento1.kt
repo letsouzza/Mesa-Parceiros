@@ -76,10 +76,28 @@ fun CadastroAlimentoPrimeiro(navegacao: NavHostController?, fromSecond: Boolean)
 
     callCategory.enqueue(object : Callback<ResultCategoria> {
         override fun onResponse(p0: Call<ResultCategoria>, response: Response<ResultCategoria>) {
-            categoryList = response.body()!!.categorias
+
+            if (response.isSuccessful) {
+                val resultCategoria = response.body()
+
+                // 3. Verificar se o corpo não é nulo antes de acessar 'categorias'
+                if (resultCategoria != null && resultCategoria.categorias != null) {
+                    categoryList = resultCategoria.categorias
+                } else {
+                    // Caso o body ou a lista de categorias seja nula, mas o status seja 2xx
+                    println("A lista de categorias retornada está vazia ou nula.")
+                    categoryList = emptyList()
+                }
+            } else {
+                // Caso a requisição tenha falhado (ex: 404, 500)
+                println("Falha na requisição de categorias. Código: ${response.code()}")
+
+            }
         }
         override fun onFailure(p0: Call<ResultCategoria>, p1: Throwable) {
-            TODO("Not yet implemented")
+            // Implementar tratamento de falha de rede/conexão
+            println("Falha de rede ao buscar categorias: ${p1.message}")
+
         }
     })
 
@@ -87,7 +105,7 @@ fun CadastroAlimentoPrimeiro(navegacao: NavHostController?, fromSecond: Boolean)
     val userFile = context.getSharedPreferences("user_file", Context.MODE_PRIVATE)
     val editor = userFile.edit()
 
-    // 🔹 Só carrega os dados se veio da segunda tel
+    // 🔹 Só carrega os dados se veio da segunda tela
     if (fromSecond) {
         LaunchedEffect(Unit) {
             withContext(Dispatchers.IO) {
@@ -275,6 +293,7 @@ fun CadastroAlimentoPrimeiro(navegacao: NavHostController?, fromSecond: Boolean)
                 }
             }
         }
+
     }
 }
 
