@@ -1,7 +1,9 @@
 package br.senai.sp.jandira.mesaparceiros.screens
 
 import android.content.Context
+import android.os.Build
 import android.util.Patterns
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

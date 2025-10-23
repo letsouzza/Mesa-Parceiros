@@ -280,7 +280,7 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
                         ){
                             IconButton(
                                 onClick = {
-                                    navegacao!!.navigate("cadastroAlimento1")
+                                    navegacao!!.navigate("cadastroAlimento1?fromSecond=true")
                                 },
                                 modifier = Modifier
                                     .padding(5.dp)
@@ -386,6 +386,11 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
             }
         }
     }
+}
+
+@Composable
+fun MostrarDados() {
+    TODO("Not yet implemented")
 }
 
 @Preview

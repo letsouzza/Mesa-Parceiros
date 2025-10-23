@@ -76,7 +76,6 @@ fun AtualizacaoSenha(navegacao: NavHostController?) {
     var senhaVisivel by remember { mutableStateOf(false) }
     var novaSenhaVisivel by remember { mutableStateOf(false) }
     var mostrarMensagemSucesso by remember { mutableStateOf(false) }
-    var isSenhaError by remember { mutableStateOf(false) }
 
     val senhaApi = RetrofitFactory().getSenhaService()
 
@@ -85,9 +84,15 @@ fun AtualizacaoSenha(navegacao: NavHostController?) {
     val emailState = userFile.getString("email", "")
     val tipoState = userFile.getString("tipo", "")
 
-    // Função de validação atualizada
+    var senhasDiferentes by remember { mutableStateOf(false) }
+
     fun validarSenhas(): Boolean {
-        return novaSenhaState.isNotEmpty() && confirmarSenhaState.isNotEmpty() && (novaSenhaState == confirmarSenhaState)
+        senhasDiferentes = novaSenhaState.isNotEmpty() &&
+                confirmarSenhaState.isNotEmpty() &&
+                novaSenhaState != confirmarSenhaState
+        return novaSenhaState.isNotEmpty() &&
+                confirmarSenhaState.isNotEmpty() &&
+                novaSenhaState == confirmarSenhaState
     }
 
     val scope = rememberCoroutineScope()
@@ -132,12 +137,12 @@ fun AtualizacaoSenha(navegacao: NavHostController?) {
                         modifier = Modifier
                             .padding(start = 20.dp)
                     )
+                    // 🔹 Campo: Nova Senha
                     BasicTextField(
                         value = novaSenhaState,
                         onValueChange = {
                             novaSenhaState = it
-                            // Limpa o erro ao digitar
-                            if (isSenhaError) isSenhaError = false
+                            validarSenhas()
                         },
                         singleLine = true,
                         textStyle = LocalTextStyle.current.copy(
@@ -176,23 +181,36 @@ fun AtualizacaoSenha(navegacao: NavHostController?) {
                                     innerTextField()
                                 }
 
+                                //  Mostrar/Esconder senha
                                 IconButton(onClick = { novaSenhaVisivel = !novaSenhaVisivel }) {
-                                    val icon = if (novaSenhaVisivel) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                                    val icon =
+                                        if (novaSenhaVisivel) Icons.Default.Visibility else Icons.Default.VisibilityOff
                                     Icon(
                                         imageVector = icon,
                                         contentDescription = "Mostrar/Esconder nova senha",
                                         tint = Color(0xFF1B4227)
                                     )
                                 }
+
+                                //  Ícone de alerta se senhas não coincidem
+                                if (senhasDiferentes) {
+                                    Icon(
+                                        imageVector = Icons.Default.Warning,
+                                        contentDescription = "Senhas diferentes",
+                                        tint = Color.Red,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
                             }
                         }
                     )
+
+                    //  Campo: Confirmar Senha
                     BasicTextField(
                         value = confirmarSenhaState,
                         onValueChange = {
                             confirmarSenhaState = it
-                            // Limpa o erro ao digitar
-                            if (isSenhaError) isSenhaError = false
+                            validarSenhas()
                         },
                         singleLine = true,
                         textStyle = LocalTextStyle.current.copy(
@@ -232,32 +250,45 @@ fun AtualizacaoSenha(navegacao: NavHostController?) {
                                 }
 
                                 IconButton(onClick = { senhaVisivel = !senhaVisivel }) {
-                                    val icon = if (senhaVisivel) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                                    val icon =
+                                        if (senhaVisivel) Icons.Default.Visibility else Icons.Default.VisibilityOff
                                     Icon(
                                         imageVector = icon,
                                         contentDescription = "Mostrar/Esconder confirmar senha",
                                         tint = Color(0xFF1B4227)
                                     )
                                 }
+
+                                //  Ícone de alerta também aqui
+                                if (senhasDiferentes) {
+                                    Icon(
+                                        imageVector = Icons.Default.Warning,
+                                        contentDescription = "Senhas diferentes",
+                                        tint = Color.Red,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
                             }
                         }
                     )
-                    if (isSenhaError) {
+
+                    //  Mensagem de erro abaixo do segundo campo
+                    if (senhasDiferentes) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 8.dp),
+                                .padding(horizontal = 20.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Warning,
                                 contentDescription = "Erro",
                                 tint = Color.Red,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Senhas incompatíveis",
+                                text = "As senhas digitadas não são compatíveis",
                                 color = Color.Red,
                                 fontSize = 16.sp,
                                 fontFamily = poppinsFamily,

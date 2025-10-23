@@ -58,7 +58,7 @@ import retrofit2.Callback
 import retrofit2.Response
 
 @Composable
-fun CadastroAlimentoPrimeiro(navegacao: NavHostController?) {
+fun CadastroAlimentoPrimeiro(navegacao: NavHostController?, fromSecond: Boolean) {
 
     var nomeState by remember { mutableStateOf("") }
     var descricao by remember { mutableStateOf("") }
@@ -87,23 +87,21 @@ fun CadastroAlimentoPrimeiro(navegacao: NavHostController?) {
     val userFile = context.getSharedPreferences("user_file", Context.MODE_PRIVATE)
     val editor = userFile.edit()
 
-    // 🔹 Carrega os dados salvos ao abrir a tela
-    LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) {
-            nomeState = userFile.getString("titulo", "") ?: ""
-            descricao = userFile.getString("descricao", "") ?: ""
-            val categoriasSalvas = userFile.getString("categorias", "") ?: ""
+    // 🔹 Só carrega os dados se veio da segunda tel
+    if (fromSecond) {
+        LaunchedEffect(Unit) {
+            withContext(Dispatchers.IO) {
+                nomeState = userFile.getString("titulo", "") ?: ""
+                descricao = userFile.getString("descricao", "") ?: ""
+                val categoriasSalvas = userFile.getString("categorias", "") ?: ""
 
-            if (categoriasSalvas.isNotEmpty()) {
-                val ids = categoriasSalvas.split(",").mapNotNull { it.toIntOrNull() }
-                ids.forEach { id ->
-                    checkedStates[id] = true
+                if (categoriasSalvas.isNotEmpty()) {
+                    val ids = categoriasSalvas.split(",").mapNotNull { it.toIntOrNull() }
+                    ids.forEach { id -> checkedStates[id] = true }
                 }
             }
         }
     }
-
-
 
     MesaParceirosTheme {
         Box(
@@ -280,10 +278,12 @@ fun CadastroAlimentoPrimeiro(navegacao: NavHostController?) {
     }
 }
 
+
+
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_NO)
 @Composable
 private fun CadastroAlimentoPrimeiroPreview() {
     MesaParceirosTheme {
-        CadastroAlimentoPrimeiro(null)
+        CadastroAlimentoPrimeiro(null, false)
     }
 }

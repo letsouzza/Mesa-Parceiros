@@ -4,9 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import br.senai.sp.jandira.mesaparceiros.screens.AtualizacaoSenha
 import br.senai.sp.jandira.mesaparceiros.screens.CadastroAlimentoPrimeiro
 import br.senai.sp.jandira.mesaparceiros.screens.CadastroAlimentoSegundo
@@ -34,7 +36,18 @@ class MainActivity : ComponentActivity() {
                     composable(route = "recuperacao"){ RecuperacaoSenha(navegacao) }
                     composable(route = "codigo"){ CodigoSenha(navegacao) }
                     composable(route = "atualizarSenha"){ AtualizacaoSenha(navegacao) }
-                    composable(route = "cadastroAlimento1"){ CadastroAlimentoPrimeiro(navegacao) }
+                    composable(
+                        route = "cadastroAlimento1?fromSecond={fromSecond}",
+                        arguments = listOf(
+                            navArgument("fromSecond") {
+                                type = NavType.BoolType
+                                defaultValue = false
+                            }
+                        )
+                    ) { backStackEntry ->
+                        val fromSecond = backStackEntry.arguments?.getBoolean("fromSecond") ?: false
+                        CadastroAlimentoPrimeiro(navegacao, fromSecond)
+                    }
                     composable(route = "cadastroAlimento2"){ CadastroAlimentoSegundo(navegacao) }
                 }
             }
