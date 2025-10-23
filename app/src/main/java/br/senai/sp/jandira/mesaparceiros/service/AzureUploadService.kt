@@ -20,7 +20,7 @@ object AzureUploadService {
         // 1) Definições de container/account e SAS
         val accountName = "mesaplustcc"
         val containerName = "fotos"
-        val sasToken = "sp=racwdl&st=2025-10-21T13:50:58Z&se=2025-10-21T20:30:58Z&sv=2024-11-04&sr=c&sig=L2Us9Q7Gfkkhl5vgPm78jyZwbiRa2mmf18y6xDxgjCE%3D"
+        val sasToken = "sp=racwdl&st=2025-10-23T12:41:46Z&se=2025-12-16T13:00:00Z&sv=2024-11-04&sr=c&sig=MzeTfPe%2Bns1vJJvi%2BazLsTIPL1YDBP2z7tDTlctlfyI%3D"
 
         // 2) Gera nome único
         val fileName = "${UUID.randomUUID()}.jpg"

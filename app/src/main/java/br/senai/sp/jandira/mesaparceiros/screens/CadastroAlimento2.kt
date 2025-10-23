@@ -1,8 +1,10 @@
 package br.senai.sp.jandira.mesaparceiros.screens
 
 import android.content.Context
+import android.database.Cursor
 import android.net.Uri
 import android.util.Log
+import android.view.PointerIcon
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,9 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowCircleLeft
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -45,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -72,6 +73,7 @@ import kotlinx.coroutines.withContext
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import androidx.compose.material.icons.filled.CloudUpload
 
 @Composable
 fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
@@ -159,15 +161,24 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
                                 .clickable { pickImageLauncher.launch("image/*") }
                         ) {
                             if (imageUri == null) {
-                                Text(
-                                    text = "Foto:",
-                                    modifier = Modifier
-                                        .padding(start = 20.dp, top = 15.dp),
-                                    fontSize = 20.sp,
-                                    fontFamily = poppinsFamily,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color(0x99000000)
-                                )
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CloudUpload,
+                                        contentDescription = "Upload de imagem",
+                                        tint = Color(0xFF1B4227),
+                                        modifier = Modifier.size(50.dp)
+                                    )
+
+                                    Text(
+                                        text = "Foto:",
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color(0x99000000),
+                                        modifier = Modifier.padding(top = 8.dp)
+                                    )
+                                }
                             } else {
                                 AsyncImage(
                                     model = imageUri,
@@ -303,9 +314,9 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
                                                 quantidade = quantidadeState,
                                                 prazo = prazoState,
                                                 descricao = "$descricao",
-                                                peso = pesoState,
+//                                                peso = pesoState,
                                                 imagem = "$urlRetornada",
-                                                idEmpresa = 1,
+                                                idEmpresa = 2,
                                                 categoria = categoriasJsonList
                                             )
                                             Log.d("lara", "$body")
@@ -332,7 +343,9 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
                                                             "Erro no servidor: código ${response.code()}",
                                                             Toast.LENGTH_LONG
                                                         ).show()
+                                                        println("erro ${response.message()}")
                                                     }
+
                                                 }
 
                                                 override fun onFailure(p0: Call<ResponseGeral>, p1: Throwable) {
