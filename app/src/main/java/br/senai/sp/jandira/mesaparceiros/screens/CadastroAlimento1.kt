@@ -46,7 +46,7 @@ import androidx.navigation.compose.rememberNavController
 import br.senai.sp.jandira.mesaparceiros.ui.theme.MesaParceirosTheme
 import br.senai.sp.jandira.mesaparceiros.R
 import br.senai.sp.jandira.mesaparceiros.model.Categoria
-import br.senai.sp.jandira.mesaparceiros.model.ResultCategoria
+import br.senai.sp.jandira.mesaparceiros.model.ListCategoria
 import br.senai.sp.jandira.mesaparceiros.screens.components.BarraInferior
 import br.senai.sp.jandira.mesaparceiros.screens.components.CategoryCheck
 import br.senai.sp.jandira.mesaparceiros.service.RetrofitFactory
@@ -74,8 +74,8 @@ fun CadastroAlimentoPrimeiro(navegacao: NavHostController?, fromSecond: Boolean)
         .getCategoryService()
         .listCategoria()
 
-    callCategory.enqueue(object : Callback<ResultCategoria> {
-        override fun onResponse(p0: Call<ResultCategoria>, response: Response<ResultCategoria>) {
+    callCategory.enqueue(object : Callback<ListCategoria> {
+        override fun onResponse(p0: Call<ListCategoria>, response: Response<ListCategoria>) {
 
             if (response.isSuccessful) {
                 val resultCategoria = response.body()
@@ -94,7 +94,7 @@ fun CadastroAlimentoPrimeiro(navegacao: NavHostController?, fromSecond: Boolean)
 
             }
         }
-        override fun onFailure(p0: Call<ResultCategoria>, p1: Throwable) {
+        override fun onFailure(p0: Call<ListCategoria>, p1: Throwable) {
             // Implementar tratamento de falha de rede/conexão
             println("Falha de rede ao buscar categorias: ${p1.message}")
 

@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -108,7 +109,7 @@ fun CardAlimento(
                 
                 // Quantidade
                 Text(
-                    text = stringResource(R.string.qnt) + quantidade,
+                    text = stringResource(R.string.quantidade) + quantidade,
                     color = Color.White,
                     fontSize = 14.sp,
                     fontFamily = poppinsFamily
@@ -119,21 +120,18 @@ fun CardAlimento(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Ícone da empresa (círculo laranja com "A")
-                    Box(
+                    Card(
                         modifier = Modifier
-                            .size(24.dp)
-                            .background(
-                                color = Color(0xFFFF6B35), // Laranja do Atacadão
-                                shape = CircleShape
-                            ),
-                        contentAlignment = Alignment.Center
+                            .size(24.dp),
+                        shape = CircleShape,
+                        colors = CardDefaults.cardColors(Color.Magenta)
                     ) {
-                        Text(
-                            text = "A",
-                            color = Color.White,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = poppinsFamily
+                        AsyncImage(
+                            model = imgEmpresa,
+                            contentDescription = "Imagem do ${empresa}",
+                            modifier = Modifier
+                                .fillMaxSize(),
+                            contentScale = ContentScale.Crop
                         )
                     }
                     
@@ -149,13 +147,16 @@ fun CardAlimento(
             }
             
             // Ícone do carrinho
-            Icon(
-                imageVector = Icons.Default.AddShoppingCart,
-                contentDescription = "Adicionar ao carrinho",
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
-            )
-
+            IconButton(
+                onClick = {}
+            ){
+                Icon(
+                    imageVector = Icons.Default.AddShoppingCart,
+                    contentDescription = "Adicionar ao carrinho",
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
     }
 }

@@ -314,7 +314,8 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
                                                 quantidade = quantidadeState,
                                                 prazo = prazoState,
                                                 descricao = "$descricao",
-                                                peso = pesoState,
+                                                peso = pesoState.toDoubleOrNull() ?: 0.0,
+                                                idTipoPeso = 1,
                                                 imagem = "$urlRetornada",
                                                 idEmpresa = idUser,
                                                 categorias = categoriasJsonList
@@ -336,7 +337,7 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
                                                             "Cadastro OK: ${response.body()?.message}",
                                                             Toast.LENGTH_LONG
                                                         ).show()
-                                                        navegacao?.navigate("home1")
+                                                        navegacao?.navigate("home")
                                                     } else {
                                                         Toast.makeText(
                                                             context,

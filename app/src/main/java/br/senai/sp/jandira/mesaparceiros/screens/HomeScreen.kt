@@ -2,13 +2,24 @@ package br.senai.sp.jandira.mesaparceiros.screens
 
 import android.content.res.Configuration
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -19,19 +30,32 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import java.text.SimpleDateFormat
 import java.util.Locale
+import br.senai.sp.jandira.mesaparceiros.R
 import br.senai.sp.jandira.mesaparceiros.model.Alimento
+import br.senai.sp.jandira.mesaparceiros.model.Categoria
+import br.senai.sp.jandira.mesaparceiros.model.EmpresaCadastro
 import br.senai.sp.jandira.mesaparceiros.model.ListAlimento
+import br.senai.sp.jandira.mesaparceiros.model.ListCategoria
+import br.senai.sp.jandira.mesaparceiros.model.ListEmpresa
 import br.senai.sp.jandira.mesaparceiros.screens.components.BarraDeTitulo
 import br.senai.sp.jandira.mesaparceiros.screens.components.BarraInferior
 import br.senai.sp.jandira.mesaparceiros.screens.components.CardAlimento
+import br.senai.sp.jandira.mesaparceiros.screens.components.CardInstituicao
+import br.senai.sp.jandira.mesaparceiros.screens.components.DropdownFiltros
 import br.senai.sp.jandira.mesaparceiros.service.RetrofitFactory
 import br.senai.sp.jandira.mesaparceiros.ui.theme.MesaParceirosTheme
+import br.senai.sp.jandira.mesaparceiros.ui.theme.backgroundLight
+import br.senai.sp.jandira.mesaparceiros.ui.theme.poppinsFamily
+import br.senai.sp.jandira.mesaparceiros.ui.theme.primaryLight
+import br.senai.sp.jandira.mesaparceiros.ui.theme.secondaryLight
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -51,11 +75,18 @@ fun formatarData(dataOriginal: String): String {
 @Composable
 fun HomeScreen(navegacao: NavHostController?) {
 
-    var controleNavegacao = rememberNavController()
-
     // Estados para controlar a UI
     var alimentoList = remember {
         mutableStateOf(listOf<Alimento>())
+    }
+    var categoriaList = remember {
+        mutableStateOf(listOf<Categoria>())
+    }
+    var empresaList = remember {
+        mutableStateOf(listOf<EmpresaCadastro>())
+    }
+    var categoriaSelecionada = remember {
+        mutableStateOf(0) // 0 = All
     }
     var isLoading = remember {
         mutableStateOf(true)
@@ -66,12 +97,50 @@ fun HomeScreen(navegacao: NavHostController?) {
 
     // Carregar dados da API quando a tela for criada
     LaunchedEffect(Unit) {
-        // Obter um Retrofit Factory
+        // Carregar categorias
+        val callCategoria = RetrofitFactory()
+            .getCategoryService()
+            .listCategoria()
+            
+        callCategoria.enqueue(object : Callback<ListCategoria> {
+            override fun onResponse(call: Call<ListCategoria>, response: Response<ListCategoria>) {
+                if (response.isSuccessful) {
+                    response.body()?.let { result ->
+                        categoriaList.value = result.categorias ?: emptyList()
+                    }
+                }
+            }
+            override fun onFailure(call: Call<ListCategoria>, t: Throwable) {
+                Log.e("HomeScreen", "Erro ao carregar categorias", t)
+            }
+        })
+        
+        // Carregar empresas
+        val callEmpresa = RetrofitFactory()
+            .getEmpresaService()
+            .listEmpresa()
+            
+        callEmpresa.enqueue(object : Callback<ListEmpresa> {
+            override fun onResponse(call: Call<ListEmpresa>, response: Response<ListEmpresa>) {
+                if (response.isSuccessful) {
+                    response.body()?.let { result ->
+                        empresaList.value = result.empresas
+                        Log.d("HomeScreen", "Empresas carregadas: ${result.empresas.size}")
+                    }
+                } else {
+                    Log.e("HomeScreen", "Erro ao carregar empresas: ${response.code()}")
+                }
+            }
+            override fun onFailure(call: Call<ListEmpresa>, t: Throwable) {
+                Log.e("HomeScreen", "Erro na requisição de empresas", t)
+            }
+        })
+        
+        // Carregar alimentos
         val callRetrofit = RetrofitFactory()
             .getAlimentoService()
             .listAlimento()
 
-        // Enviar a requisição
         callRetrofit.enqueue(object : Callback<ListAlimento> {
             override fun onResponse(call: Call<ListAlimento>, response: Response<ListAlimento>) {
                 isLoading.value = false
@@ -99,17 +168,82 @@ fun HomeScreen(navegacao: NavHostController?) {
             BarraDeTitulo()
         },
         bottomBar = {
-            BarraInferior(controleNavegacao)
+            BarraInferior(navegacao)
         },
         content = { paddingValues ->
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(backgroundLight)
                     .padding(paddingValues)
             ) {
+                // Seção de Filtros
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    DropdownFiltros()
+                }
+                // Seção de Categorias
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.categorias),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = poppinsFamily,
+                        color = primaryLight,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(horizontal = 4.dp)
+                    ) {
+                        // Botão "All"
+                        item {
+                            Button(
+                                onClick = { categoriaSelecionada.value = 0 },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (categoriaSelecionada.value == 0) primaryLight else Color.Gray,
+                                    contentColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(20.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.all),
+                                    fontFamily = poppinsFamily
+                                )
+                            }
+                        }
+                        
+                        // Categorias da API
+                        items(categoriaList.value) { categoria ->
+                            Button(
+                                onClick = { categoriaSelecionada.value = categoria.id },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (categoriaSelecionada.value == categoria.id) primaryLight else Color.Gray,
+                                    contentColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(20.dp)
+                            ) {
+                                Text(
+                                    text = categoria.nome,
+                                    fontFamily = poppinsFamily
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Lista de Alimentos
                 when {
                     isLoading.value -> {
-                        // Estado de carregamento
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -118,7 +252,6 @@ fun HomeScreen(navegacao: NavHostController?) {
                         }
                     }
                     errorMessage.value != null -> {
-                        // Estado de erro
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -130,7 +263,6 @@ fun HomeScreen(navegacao: NavHostController?) {
                         }
                     }
                     alimentoList.value.isEmpty() -> {
-                        // Estado vazio
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -139,11 +271,8 @@ fun HomeScreen(navegacao: NavHostController?) {
                         }
                     }
                     else -> {
-                        // Lista de alimentos
                         LazyColumn(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp),
+                            modifier = Modifier.weight(1f),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             items(alimentoList.value) { alimento ->
@@ -152,17 +281,42 @@ fun HomeScreen(navegacao: NavHostController?) {
                                     nome = alimento.nome,
                                     prazo = formatarData(alimento.prazo),
                                     quantidade = alimento.quantidade,
-                                    imgEmpresa = "", // Pode ser implementado depois se necessário
-                                    empresa = "Atacadão" // Pode ser obtido da empresa associada
+                                    imgEmpresa = "",
+                                    empresa = ""
                                 )
                             }
+                        }
+                    }
+                }
+                
+                // Seção de Instituições
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.instituicoes),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = poppinsFamily,
+                        color = primaryLight,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        contentPadding = PaddingValues(horizontal = 4.dp)
+                    ) {
+                        items(empresaList.value) { empresa ->
+                            CardInstituicao(
+                                nome = empresa.nome,
+                                imagem = empresa.foto
+                            )
                         }
                     }
                 }
             }
         }
     )
-
 }
 
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_NO)

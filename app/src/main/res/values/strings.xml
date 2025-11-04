@@ -33,4 +33,11 @@
     <string name="confirmar_senha">Confirmar senha:</string>
     <string name="qnt">Qnt: </string>
     <string name="prazo_curto">Prazo: </string>
+    <string name="categorias">Categorias</string>
+    <string name="instituicoes">Instituições</string>
+    <string name="filtros">Filtros</string>
+    <string name="filtrar_por_empresa">Filtrar por empresa</string>
+    <string name="filtrar_por_data">Filtrar por data de validade</string>
+    <string name="filtrar">Filtrar</string>
+    <string name="all">All</string>
 </resources>

@@ -28,7 +28,7 @@ fun BarraInferior(controleNavegacao: NavHostController?) {
     ){
         NavigationBarItem(
             onClick = {
-                controleNavegacao!!.navigate("conteudo")
+                controleNavegacao?.navigate("home")
             },
             selected = false,
             icon = {
@@ -42,7 +42,7 @@ fun BarraInferior(controleNavegacao: NavHostController?) {
         )
         NavigationBarItem(
             onClick = {
-                controleNavegacao!!.navigate("cadastro")
+                controleNavegacao?.navigate("cadastroAlimento1")
             },
             selected = false,
             icon = {
@@ -60,7 +60,7 @@ fun BarraInferior(controleNavegacao: NavHostController?) {
             icon = {
                 Icon(
                     imageVector = Icons.Default.PersonPin,
-                    contentDescription = "Favorito",
+                    contentDescription = "Person",
                     Modifier.size(40.dp),
                     tint = Color(0xFFB9CE5D)
                 )
