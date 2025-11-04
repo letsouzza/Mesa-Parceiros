@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Mesa+ Parceiros</string>
+    <string name="subtitulo">Combatendo o desperdício e a fome</string>
     <string name="cadastrar">Cadastrar</string>
     <string name="empresa">Empresa</string>
     <string name="cadastre_se">Cadastre-se</string>
@@ -30,4 +31,6 @@
     <string name="reenviar_codigo">Reenviar código</string>
     <string name="nova_senha">Nova senha:</string>
     <string name="confirmar_senha">Confirmar senha:</string>
+    <string name="qnt">Qnt: </string>
+    <string name="prazo_curto">Prazo: </string>
 </resources>

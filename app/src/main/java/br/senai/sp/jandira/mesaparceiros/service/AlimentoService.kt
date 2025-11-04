@@ -14,7 +14,7 @@ interface AlimentoService {
     @GET("categoria")
     fun listCategoria(): retrofit2.Call<ResultCategoria>
 
-    @GET("categoria")
+    @GET("alimentos")
     fun listAlimento(): retrofit2.Call<ListAlimento>
 
     @Headers("Content-Type: application/json")

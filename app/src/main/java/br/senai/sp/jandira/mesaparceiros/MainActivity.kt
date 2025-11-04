@@ -14,6 +14,7 @@ import br.senai.sp.jandira.mesaparceiros.screens.CadastroAlimentoPrimeiro
 import br.senai.sp.jandira.mesaparceiros.screens.CadastroAlimentoSegundo
 import br.senai.sp.jandira.mesaparceiros.screens.CadastroEmpresa
 import br.senai.sp.jandira.mesaparceiros.screens.CodigoSenha
+import br.senai.sp.jandira.mesaparceiros.screens.HomeScreen
 import br.senai.sp.jandira.mesaparceiros.screens.LoginScreen
 import br.senai.sp.jandira.mesaparceiros.screens.RecuperacaoSenha
 import br.senai.sp.jandira.mesaparceiros.screens.SplashScreen
@@ -28,7 +29,7 @@ class MainActivity : ComponentActivity() {
                 val navegacao = rememberNavController()
                 NavHost(
                     navController = navegacao,
-                    startDestination = "splash"
+                    startDestination = "home"
                 ){
                     composable(route = "login"){ LoginScreen(navegacao)}
                     composable(route = "cadastro"){ CadastroEmpresa(navegacao)}
@@ -49,6 +50,7 @@ class MainActivity : ComponentActivity() {
                         CadastroAlimentoPrimeiro(navegacao, fromSecond)
                     }
                     composable(route = "cadastroAlimento2"){ CadastroAlimentoSegundo(navegacao) }
+                    composable(route = "home"){ HomeScreen(navegacao) }
                 }
             }
         }

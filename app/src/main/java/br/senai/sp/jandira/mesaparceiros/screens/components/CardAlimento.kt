@@ -1,10 +1,12 @@
 package br.senai.sp.jandira.mesaparceiros.screens.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,113 +16,148 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddShoppingCart
-import androidx.compose.material.icons.filled.ShoppingCartCheckout
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import br.senai.sp.jandira.mesaparceiros.model.ResultCategoria
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import br.senai.sp.jandira.mesaparceiros.R
+import br.senai.sp.jandira.mesaparceiros.ui.theme.poppinsFamily
+import br.senai.sp.jandira.mesaparceiros.ui.theme.primaryLight
 
 @Composable
 fun CardAlimento(
     img: String = "https://mesaplustcc.blob.core.windows.net/fotos/106aab1d-a736-429f-9b8a-af40d61562d3.jpg",
     nome: String = "Feijão",
-    prazo: String = "2026-09-08",
-    quantidade: String = "50",
+    prazo: String = "25/09/25",
+    quantidade: String = "5",
     imgEmpresa: String = "",
-    empresa: String = "atacadao",
+    empresa: String = "Atacadão",
 ) {
     Card(
         modifier = Modifier
-            .width(370.dp)
-            .height(130.dp)
-    ){
+            .fillMaxWidth()
+            .height(140.dp)
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = primaryLight)
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(8.dp)
-        ){
+                .padding(10.dp),
+            verticalAlignment = Alignment.Bottom
+        ) {
+            // Imagem do produto
             Card(
                 modifier = Modifier
-                    .padding(start = 4.dp)
-                    .weight(1f),
-                colors = CardDefaults.cardColors(Color.Magenta)
-            ){
+                    .height(140.dp)
+                    .width(80.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
                 AsyncImage(
                     model = img,
-                    contentDescription = "",
+                    contentDescription = "Imagem do $nome",
                     modifier = Modifier
                         .fillMaxSize()
-                        .clip(RoundedCornerShape(10.dp)),
-                    contentScale = ContentScale.Crop
+                        .padding(4.dp),
+                    contentScale = ContentScale.Fit
                 )
             }
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            // Informações do produto
             Column(
                 modifier = Modifier
-                    .weight(3f)
-                    .padding(start = 15.dp)
-            ){
+                    .weight(1f)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Nome do produto
                 Text(
-                    text = nome
+                    text = nome,
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = poppinsFamily
                 )
+                
+                // Prazo de validade
                 Text(
-                    text = stringResource(R.string.prazo) + prazo
+                    text = stringResource(R.string.prazo_curto) + prazo,
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontFamily = poppinsFamily
                 )
+                
+                // Quantidade
                 Text(
-                    text = stringResource(R.string.quantidade) + quantidade
+                    text = stringResource(R.string.qnt) + quantidade,
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontFamily = poppinsFamily
                 )
+                
+                // Empresa
                 Row(
-                    modifier = Modifier
-                        .weight(0.5f),
-                    verticalAlignment = Alignment.Bottom
-                ){
-                    Card(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Ícone da empresa (círculo laranja com "A")
+                    Box(
                         modifier = Modifier
-                            .size(30.dp),
-                        colors = CardDefaults.cardColors(Color.Magenta),
-                        shape = CircleShape
-                    ){
-                        AsyncImage(
-                            model = imgEmpresa,
-                            contentDescription = "",
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(RoundedCornerShape(10.dp)),
-                            contentScale = ContentScale.Crop
+                            .size(24.dp)
+                            .background(
+                                color = Color(0xFFFF6B35), // Laranja do Atacadão
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "A",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = poppinsFamily
                         )
                     }
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
                     Text(
-                        text = empresa
+                        text = empresa,
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontFamily = poppinsFamily
                     )
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        horizontalAlignment = Alignment.End
-                    ){
-                        Icon(
-                            imageVector = Icons.Default.AddShoppingCart,
-                            contentDescription = ""
-                        )
-                    }
                 }
             }
+            
+            // Ícone do carrinho
+            Icon(
+                imageVector = Icons.Default.AddShoppingCart,
+                contentDescription = "Adicionar ao carrinho",
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
+            )
+
         }
     }
-
 }
 
 @Preview

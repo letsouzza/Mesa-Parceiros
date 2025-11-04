@@ -3,6 +3,7 @@ package br.senai.sp.jandira.mesaparceiros.screens.components
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Fastfood
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
@@ -40,38 +41,14 @@ fun BarraInferior(controleNavegacao: NavHostController?) {
             }
         )
         NavigationBarItem(
-            onClick = {},
-            selected = false,
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.Favorite,
-                    contentDescription = "Favorito",
-                    Modifier.size(40.dp),
-                    tint = Color(0xFFB9CE5D)
-                )
-            }
-        )
-        NavigationBarItem(
             onClick = {
                 controleNavegacao!!.navigate("cadastro")
             },
             selected = false,
             icon = {
                 Icon(
-                    imageVector = Icons.Default.Fastfood,
+                    imageVector = Icons.Default.AddCircle,
                     contentDescription = "Novo",
-                    Modifier.size(40.dp),
-                    tint = Color(0xFFB9CE5D)
-                )
-            }
-        )
-        NavigationBarItem(
-            onClick = {},
-            selected = false,
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.LocationOn,
-                    contentDescription = "Favorito",
                     Modifier.size(40.dp),
                     tint = Color(0xFFB9CE5D)
                 )
