@@ -317,7 +317,7 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
                                                 peso = pesoState.toDoubleOrNull() ?: 0.0,
                                                 idTipoPeso = 1,
                                                 imagem = "$urlRetornada",
-                                                idEmpresa = idUser,
+                                                idEmpresa = 4,
                                                 categorias = categoriasJsonList
                                             )
                                             Log.d("lara", "$body")
