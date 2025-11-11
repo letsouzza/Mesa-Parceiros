@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -40,9 +39,11 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import br.senai.sp.jandira.mesaparceiros.R
 import br.senai.sp.jandira.mesaparceiros.model.Alimento
+import br.senai.sp.jandira.mesaparceiros.model.AlimentoFiltro
 import br.senai.sp.jandira.mesaparceiros.model.Categoria
 import br.senai.sp.jandira.mesaparceiros.model.EmpresaCadastro
 import br.senai.sp.jandira.mesaparceiros.model.ListAlimento
+import br.senai.sp.jandira.mesaparceiros.model.ListAlimentoFiltro
 import br.senai.sp.jandira.mesaparceiros.model.ListCategoria
 import br.senai.sp.jandira.mesaparceiros.model.ListEmpresa
 import br.senai.sp.jandira.mesaparceiros.screens.components.BarraDeTitulo
@@ -55,20 +56,23 @@ import br.senai.sp.jandira.mesaparceiros.ui.theme.MesaParceirosTheme
 import br.senai.sp.jandira.mesaparceiros.ui.theme.backgroundLight
 import br.senai.sp.jandira.mesaparceiros.ui.theme.poppinsFamily
 import br.senai.sp.jandira.mesaparceiros.ui.theme.primaryLight
-import br.senai.sp.jandira.mesaparceiros.ui.theme.secondaryLight
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
 // Função para formatar a data de yyyy-MM-dd para dd/MM/yy
-fun formatarData(dataOriginal: String): String {
+fun formatarData(dataOriginal: String?): String {
     return try {
+        if (dataOriginal.isNullOrEmpty()) {
+            return "Data não informada"
+        }
         val formatoOriginal = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val formatoDesejado = SimpleDateFormat("dd/MM/yy", Locale.getDefault())
         val data = formatoOriginal.parse(dataOriginal)
         formatoDesejado.format(data ?: return dataOriginal)
     } catch (e: Exception) {
-        dataOriginal // Retorna a data original se houver erro
+        Log.e("HomeScreen", "Erro ao formatar data: $dataOriginal", e)
+        dataOriginal ?: "Data inválida"
     }
 }
 
@@ -78,6 +82,9 @@ fun HomeScreen(navegacao: NavHostController?) {
     // Estados para controlar a UI
     var alimentoList = remember {
         mutableStateOf(listOf<Alimento>())
+    }
+    var alimentoListFiltro = remember {
+        mutableStateOf(listOf<AlimentoFiltro>())
     }
     var categoriaList = remember {
         mutableStateOf(listOf<Categoria>())
@@ -95,43 +102,87 @@ fun HomeScreen(navegacao: NavHostController?) {
         mutableStateOf<String?>(null)
     }
 
-    // Função para carregar alimentos
-    fun carregarAlimentos() {
+    // Função para carregar alimentos (todos ou por categoria)
+    fun carregarAlimentos(categoriaId: Int = 0) {
         isLoading.value = true
-        val callRetrofit = RetrofitFactory()
-            .getAlimentoService()
-            .listAlimento()
+        errorMessage.value = null
 
-        callRetrofit.enqueue(object : Callback<ListAlimento> {
-            override fun onResponse(call: Call<ListAlimento>, response: Response<ListAlimento>) {
-                isLoading.value = false
-                if (response.isSuccessful) {
-                    response.body()?.let { listAlimento ->
-                        // Ordenar por ID decrescente para mostrar os mais recentes primeiro
-                        alimentoList.value = listAlimento.alimentos.sortedByDescending { it.id }
-                        Log.d("HomeScreen", "Alimentos carregados: ${listAlimento.alimentos.size}")
+        if (categoriaId == 0) {
+            // Carregar todos os alimentos
+            val call = RetrofitFactory().getAlimentoService().listAlimento()
+
+            call.enqueue(object : Callback<ListAlimento> {
+                override fun onResponse(call: Call<ListAlimento>, response: Response<ListAlimento>) {
+                    isLoading.value = false
+                    if (response.isSuccessful) {
+                        response.body()?.let { listAlimento ->
+                            alimentoList.value = listAlimento.alimentos ?: emptyList()
+                            alimentoListFiltro.value = emptyList() // Limpar lista filtrada
+                            Log.d("HomeScreen", "Alimentos carregados: ${listAlimento.alimentos?.size ?: 0}")
+                        } ?: run {
+                            alimentoList.value = emptyList()
+                            alimentoListFiltro.value = emptyList()
+                            Log.w("HomeScreen", "Response body é nulo")
+                        }
+                    } else {
+                        alimentoList.value = emptyList()
+                        alimentoListFiltro.value = emptyList()
+                        errorMessage.value = "Falha no carregamento"
+                        Log.e("HomeScreen", "Erro na resposta: ${response.code()}")
                     }
-                } else {
-                    errorMessage.value = "Erro ao carregar alimentos: ${response.code()}"
-                    Log.e("HomeScreen", "Erro na resposta: ${response.code()}")
                 }
-            }
 
-            override fun onFailure(call: Call<ListAlimento>, t: Throwable) {
-                isLoading.value = false
-                errorMessage.value = "Erro de conexão: ${t.message}"
-                Log.e("HomeScreen", "Erro na requisição", t)
-            }
-        })
+                override fun onFailure(call: Call<ListAlimento>, t: Throwable) {
+                    isLoading.value = false
+                    alimentoList.value = emptyList()
+                    alimentoListFiltro.value = emptyList()
+                    errorMessage.value = "Falha na conexão"
+                    Log.e("HomeScreen", "Erro na requisição", t)
+                }
+            })
+        } else {
+            // Carregar alimentos por categoria
+            val call = RetrofitFactory().getAlimentoService().filtroCategoria(categoriaId)
+
+            call.enqueue(object : Callback<ListAlimentoFiltro> {
+                override fun onResponse(call: Call<ListAlimentoFiltro>, response: Response<ListAlimentoFiltro>) {
+                    isLoading.value = false
+                    if (response.isSuccessful) {
+                        response.body()?.let { listAlimentoFiltro ->
+                            alimentoListFiltro.value = listAlimentoFiltro.resultFiltro ?: emptyList()
+                            alimentoList.value = emptyList() // Limpar lista geral
+                            Log.d("HomeScreen", "Alimentos filtrados carregados: ${listAlimentoFiltro.resultFiltro?.size ?: 0}")
+                        } ?: run {
+                            alimentoListFiltro.value = emptyList()
+                            alimentoList.value = emptyList()
+                            Log.w("HomeScreen", "Response body é nulo")
+                        }
+                    } else {
+                        alimentoListFiltro.value = emptyList()
+                        alimentoList.value = emptyList()
+                        errorMessage.value = "Falha no carregamento"
+                        Log.e("HomeScreen", "Erro na resposta: ${response.code()}")
+                    }
+                }
+
+                override fun onFailure(call: Call<ListAlimentoFiltro>, t: Throwable) {
+                    isLoading.value = false
+                    alimentoListFiltro.value = emptyList()
+                    alimentoList.value = emptyList()
+                    errorMessage.value = "Falha na conexão"
+                    Log.e("HomeScreen", "Erro na requisição", t)
+                }
+            })
+        }
     }
 
     // Carregar dados da API quando a tela for criada
     LaunchedEffect(Unit) {
         // Carregar categorias
         val callCategoria = RetrofitFactory()
-            .getCategoryService()
+            .getAlimentoService()
             .listCategoria()
-            
+
         callCategoria.enqueue(object : Callback<ListCategoria> {
             override fun onResponse(call: Call<ListCategoria>, response: Response<ListCategoria>) {
                 if (response.isSuccessful) {
@@ -144,12 +195,12 @@ fun HomeScreen(navegacao: NavHostController?) {
                 Log.e("HomeScreen", "Erro ao carregar categorias", t)
             }
         })
-        
+
         // Carregar empresas
         val callEmpresa = RetrofitFactory()
             .getEmpresaService()
             .listEmpresa()
-            
+
         callEmpresa.enqueue(object : Callback<ListEmpresa> {
             override fun onResponse(call: Call<ListEmpresa>, response: Response<ListEmpresa>) {
                 if (response.isSuccessful) {
@@ -165,16 +216,9 @@ fun HomeScreen(navegacao: NavHostController?) {
                 Log.e("HomeScreen", "Erro na requisição de empresas", t)
             }
         })
-        
-        // Carregar alimentos usando a função
-        carregarAlimentos()
-    }
 
-    // Recarregar alimentos quando voltar para a tela (detecta mudanças na navegação)
-    LaunchedEffect(navegacao?.currentBackStackEntry) {
-        if (navegacao?.currentDestination?.route == "home") {
-            carregarAlimentos()
-        }
+        // Carregar todos os alimentos inicialmente
+        carregarAlimentos(0)
     }
 
     Scaffold (
@@ -200,6 +244,7 @@ fun HomeScreen(navegacao: NavHostController?) {
                 ) {
                     DropdownFiltros()
                 }
+
                 // Seção de Categorias
                 Column(
                     modifier = Modifier.padding(horizontal = 16.dp)
@@ -212,7 +257,7 @@ fun HomeScreen(navegacao: NavHostController?) {
                         color = primaryLight,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    
+
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp)
@@ -220,7 +265,10 @@ fun HomeScreen(navegacao: NavHostController?) {
                         // Botão "All"
                         item {
                             Button(
-                                onClick = { categoriaSelecionada.value = 0 },
+                                onClick = {
+                                    categoriaSelecionada.value = 0
+                                    carregarAlimentos(0)
+                                },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = if (categoriaSelecionada.value == 0) primaryLight else Color.Gray,
                                     contentColor = Color.White
@@ -233,11 +281,14 @@ fun HomeScreen(navegacao: NavHostController?) {
                                 )
                             }
                         }
-                        
+
                         // Categorias da API
                         items(categoriaList.value) { categoria ->
                             Button(
-                                onClick = { categoriaSelecionada.value = categoria.id },
+                                onClick = {
+                                    categoriaSelecionada.value = categoria.id
+                                    carregarAlimentos(categoria.id)
+                                },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = if (categoriaSelecionada.value == categoria.id) primaryLight else Color.Gray,
                                     contentColor = Color.White
@@ -252,58 +303,133 @@ fun HomeScreen(navegacao: NavHostController?) {
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // Lista de Alimentos
-                when {
-                    isLoading.value -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
+                Box(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    when {
+                        isLoading.value -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
                         }
-                    }
-                    errorMessage.value != null -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = errorMessage.value ?: "Erro desconhecido",
-                                color = Color.Red
-                            )
+                        errorMessage.value != null -> {
+                            // Mensagem de erro no carregamento
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp)
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = "⚠️",
+                                        fontSize = 48.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        text = "Não foi possível carregar os alimentos",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        fontFamily = poppinsFamily,
+                                        color = primaryLight,
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Verifique sua conexão e tente novamente",
+                                        fontSize = 14.sp,
+                                        fontFamily = poppinsFamily,
+                                        color = Color.Gray.copy(alpha = 0.8f)
+                                    )
+                                }
+                            }
                         }
-                    }
-                    alimentoList.value.isEmpty() -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(text = "Nenhum alimento encontrado")
+                        (alimentoList.value.isEmpty() && alimentoListFiltro.value.isEmpty()) -> {
+                            // Mensagem quando não há alimentos na categoria
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp)
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = "🍽️",
+                                        fontSize = 48.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        text = if (categoriaSelecionada.value == 0)
+                                            "Nenhum alimento disponível"
+                                        else
+                                            "Não há alimentos desta categoria",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        fontFamily = poppinsFamily,
+                                        color = primaryLight,
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Tente selecionar outra categoria",
+                                        fontSize = 14.sp,
+                                        fontFamily = poppinsFamily,
+                                        color = Color.Gray.copy(alpha = 0.8f)
+                                    )
+                                }
+                            }
                         }
-                    }
-                    else -> {
-                        LazyColumn(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(alimentoList.value) { alimento ->
-                                CardAlimento(
-                                    img = alimento.imagem,
-                                    nome = alimento.nome,
-                                    prazo = formatarData(alimento.prazo),
-                                    quantidade = alimento.quantidade,
-                                    imgEmpresa = "",
-                                    empresa = ""
-                                )
+                        else -> {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                            ) {
+                                // Mostrar alimentos gerais ou filtrados
+                                if (categoriaSelecionada.value == 0) {
+                                    // Mostrar todos os alimentos
+                                    items(alimentoList.value) { alimento ->
+                                        CardAlimento(
+                                            img = alimento.imagem ?: "",
+                                            nome = alimento.nome ?: "Alimento sem nome",
+                                            prazo = formatarData(alimento.prazo),
+                                            quantidade = alimento.quantidade ?: "0",
+                                            imgEmpresa = "",
+                                            empresa = "Empresa ID: ${alimento.idEmpresa}"
+                                        )
+                                    }
+                                } else {
+                                    // Mostrar alimentos filtrados por categoria
+                                    items(alimentoListFiltro.value) { alimento ->
+                                        CardAlimento(
+                                            img = alimento.imagem ?: "",
+                                            nome = alimento.nome ?: "Alimento sem nome",
+                                            prazo = formatarData(alimento.prazo),
+                                            quantidade = alimento.quantidade ?: "0",
+                                            imgEmpresa = alimento.fotoEmpresa ?: "",
+                                            empresa = alimento.nomeEmpresa ?: "Empresa não informada"
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
                 }
-                
-                // Seção de Instituições
+
+                // Seção de Instituições - sempre visível
                 Column(
                     modifier = Modifier.padding(16.dp)
                 ) {
@@ -315,7 +441,7 @@ fun HomeScreen(navegacao: NavHostController?) {
                         color = primaryLight,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    
+
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp)
