@@ -60,6 +60,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
+
 // Função para formatar a data de yyyy-MM-dd para dd/MM/yy
 fun formatarData(dataOriginal: String?): String {
     return try {
@@ -407,8 +408,8 @@ fun HomeScreen(navegacao: NavHostController?) {
                                             nome = alimento.nome ?: "Alimento sem nome",
                                             prazo = formatarData(alimento.prazo),
                                             quantidade = alimento.quantidade ?: "0",
-                                            imgEmpresa = "",
-                                            empresa = "Empresa ID: ${alimento.idEmpresa}"
+                                            imgEmpresa = alimento.empresa?.foto ?: "",
+                                            empresa = alimento.empresa?.nome ?: "Empresa não informada"
                                         )
                                     }
                                 } else {

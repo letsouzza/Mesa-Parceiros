@@ -8,6 +8,7 @@ data class AlimentoFiltro(
     var quantidade: String = "",
     var peso: String = "",
     @SerializedName("id_tipo_peso") var idTipoPeso: Int = 0,
+    @SerializedName("tipo_peso") var tipoPeso: String = "Kg",
     @SerializedName("data_de_validade") var prazo: String = "",
     var descricao: String = "",
     var imagem: String = "",

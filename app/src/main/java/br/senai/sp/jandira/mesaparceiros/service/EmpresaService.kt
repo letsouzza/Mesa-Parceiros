@@ -10,6 +10,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Headers
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface EmpresaService {
 
@@ -19,6 +20,9 @@ interface EmpresaService {
 
     @GET("empresa")
     fun listEmpresa(): retrofit2.Call<ListEmpresa>
+
+    @GET("empresa/{id}")
+    fun empresaPorId(@Path("id") id: Int): retrofit2.Call<EmpresaCadastro>
 
     @Headers("Content-Type: application/json")
     @POST("login")

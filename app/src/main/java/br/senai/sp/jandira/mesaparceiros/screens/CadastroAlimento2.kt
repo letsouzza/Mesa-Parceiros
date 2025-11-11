@@ -70,6 +70,8 @@ import retrofit2.Callback
 import retrofit2.Response
 import androidx.compose.material.icons.filled.CloudUpload
 import br.senai.sp.jandira.mesaparceiros.model.Categoria
+import br.senai.sp.jandira.mesaparceiros.model.TipoPeso
+import br.senai.sp.jandira.mesaparceiros.screens.components.DropdownTipoPeso
 
 @Composable
 fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
@@ -90,6 +92,7 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
     var quantidadeState by remember { mutableStateOf("") }
     var prazoState by remember { mutableStateOf("") }
     var pesoState by remember { mutableStateOf("") }
+    var tipoPesoSelecionado by remember { mutableStateOf<TipoPeso?>(null) }
 
     val context = LocalContext.current
     val userFile = context.getSharedPreferences("user_file", Context.MODE_PRIVATE)
@@ -100,6 +103,7 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
     val categoriasList = categoriasString.split(",").mapNotNull { it.toIntOrNull() }
 
     var mostrarMensagemSucesso by remember { mutableStateOf(false) }
+
 
 
     Box(
@@ -243,32 +247,43 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
                                 .padding(horizontal = 15.dp)
                         )
                         Spacer(Modifier.padding(top = 10.dp))
-                        OutlinedTextField(
-                            value = pesoState,
-                            onValueChange = {pesoState = it},
-                            colors = OutlinedTextFieldDefaults.colors(
-                                unfocusedContainerColor = Color(0xFFFFFFFF),
-                                focusedContainerColor = Color(0xFFFFFFFF),
-                                unfocusedBorderColor = Color(0xFF1B4227),
-                                focusedBorderColor = Color(0xFF1B4227),
-                                focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black
-                            ),
-                            shape = RoundedCornerShape(30.dp),
-                            label = {
-                                Text(
-                                    text = stringResource(
-                                        R.string.peso
-                                    ),
-                                    fontSize = 20.sp,
-                                    fontFamily = poppinsFamily,
-                                    color = Color(0x99000000)
-                                )
-                            },
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 15.dp)
-                        )
+                                .padding(horizontal = 15.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            OutlinedTextField(
+                                value = pesoState,
+                                onValueChange = {pesoState = it},
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    unfocusedContainerColor = Color(0xFFFFFFFF),
+                                    focusedContainerColor = Color(0xFFFFFFFF),
+                                    unfocusedBorderColor = Color(0xFF1B4227),
+                                    focusedBorderColor = Color(0xFF1B4227),
+                                    focusedTextColor = Color.Black,
+                                    unfocusedTextColor = Color.Black
+                                ),
+                                shape = RoundedCornerShape(30.dp),
+                                label = {
+                                    Text(
+                                        text = stringResource(R.string.peso),
+                                        fontSize = 20.sp,
+                                        fontFamily = poppinsFamily,
+                                        color = Color(0x99000000)
+                                    )
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
+                            
+                            DropdownTipoPeso(
+                                tipoPesoSelecionado = tipoPesoSelecionado,
+                                onTipoPesoSelected = { tipo ->
+                                    tipoPesoSelecionado = tipo
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -313,7 +328,7 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
                                                 prazo = prazoState,
                                                 descricao = "$descricao",
                                                 peso = pesoState.toDoubleOrNull() ?: 0.0,
-                                                idTipoPeso = 1,
+                                                idTipoPeso = tipoPesoSelecionado?.id ?: 1,
                                                 imagem = "$urlRetornada",
                                                 idEmpresa = 4,
                                                 categorias = categoriasJsonList

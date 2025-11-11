@@ -44,4 +44,11 @@
     <string name="data_validade">Data de Validade:</string>
     <string name="adicionar_carrinho">Adicionar ao carrinho</string>
     <string name="km">km</string>
+    <string name="tipo_peso">Tipo de Peso:</string>
+    <string name="editar">Editar</string>
+    <string name="endereco">Endereço:</string>
+    <string name="atualizar_dados">Atualizar dados</string>
+    <string name="minhas_publicacoes">Minhas publicações</string>
+    <string name="nao_possui">Não possui</string>
+    <string name="perfil_empresa">Perfil da Empresa</string>
 </resources>

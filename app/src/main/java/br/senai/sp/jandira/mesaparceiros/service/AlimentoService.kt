@@ -5,6 +5,7 @@ import br.senai.sp.jandira.mesaparceiros.model.ListAlimento
 import br.senai.sp.jandira.mesaparceiros.model.ListAlimentoFiltro
 import br.senai.sp.jandira.mesaparceiros.model.ResponseGeral
 import br.senai.sp.jandira.mesaparceiros.model.ListCategoria
+import br.senai.sp.jandira.mesaparceiros.model.ListTipoPeso
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Headers
@@ -21,6 +22,9 @@ interface AlimentoService {
 
     @GET("alimentos")
     fun listAlimento(): retrofit2.Call<ListAlimento>
+
+    @GET("tipoPeso")
+    fun listTipoPeso(): retrofit2.Call<ListTipoPeso>
 
     @Headers("Content-Type: application/json")
     @POST("alimentos")

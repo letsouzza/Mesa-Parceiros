@@ -109,7 +109,7 @@ fun CardAlimento(
                 
                 // Quantidade
                 Text(
-                    text = stringResource(R.string.quantidade) + quantidade,
+                    text = stringResource(R.string.qnt) + quantidade,
                     color = Color.White,
                     fontSize = 14.sp,
                     fontFamily = poppinsFamily

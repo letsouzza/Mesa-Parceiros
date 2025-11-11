@@ -12,5 +12,7 @@ data class Alimento(
     @SerializedName("id_tipo_peso") var idTipoPeso: Int = 1,
     var imagem: String = "",
     @SerializedName("id_empresa") var idEmpresa: Int = 1,
-    val categorias: List<Categoria> // ou List<Int> dependendo do tipo
+    val categorias: List<Categoria>, // ou List<Int> dependendo do tipo
+    val empresa: EmpresaCadastro? = null,
+    val tipoPeso: List<TipoPeso>? = null
 )

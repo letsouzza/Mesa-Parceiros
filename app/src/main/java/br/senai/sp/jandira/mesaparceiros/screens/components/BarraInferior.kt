@@ -55,12 +55,14 @@ fun BarraInferior(controleNavegacao: NavHostController?) {
             }
         )
         NavigationBarItem(
-            onClick = {},
+            onClick = {
+                controleNavegacao?.navigate("perfilEmpresa")
+            },
             selected = false,
             icon = {
                 Icon(
                     imageVector = Icons.Default.PersonPin,
-                    contentDescription = "Person",
+                    contentDescription = "Perfil",
                     Modifier.size(40.dp),
                     tint = Color(0xFFB9CE5D)
                 )
