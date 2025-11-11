@@ -95,6 +95,36 @@ fun HomeScreen(navegacao: NavHostController?) {
         mutableStateOf<String?>(null)
     }
 
+    // Função para carregar alimentos
+    fun carregarAlimentos() {
+        isLoading.value = true
+        val callRetrofit = RetrofitFactory()
+            .getAlimentoService()
+            .listAlimento()
+
+        callRetrofit.enqueue(object : Callback<ListAlimento> {
+            override fun onResponse(call: Call<ListAlimento>, response: Response<ListAlimento>) {
+                isLoading.value = false
+                if (response.isSuccessful) {
+                    response.body()?.let { listAlimento ->
+                        // Ordenar por ID decrescente para mostrar os mais recentes primeiro
+                        alimentoList.value = listAlimento.alimentos.sortedByDescending { it.id }
+                        Log.d("HomeScreen", "Alimentos carregados: ${listAlimento.alimentos.size}")
+                    }
+                } else {
+                    errorMessage.value = "Erro ao carregar alimentos: ${response.code()}"
+                    Log.e("HomeScreen", "Erro na resposta: ${response.code()}")
+                }
+            }
+
+            override fun onFailure(call: Call<ListAlimento>, t: Throwable) {
+                isLoading.value = false
+                errorMessage.value = "Erro de conexão: ${t.message}"
+                Log.e("HomeScreen", "Erro na requisição", t)
+            }
+        })
+    }
+
     // Carregar dados da API quando a tela for criada
     LaunchedEffect(Unit) {
         // Carregar categorias
@@ -136,31 +166,15 @@ fun HomeScreen(navegacao: NavHostController?) {
             }
         })
         
-        // Carregar alimentos
-        val callRetrofit = RetrofitFactory()
-            .getAlimentoService()
-            .listAlimento()
+        // Carregar alimentos usando a função
+        carregarAlimentos()
+    }
 
-        callRetrofit.enqueue(object : Callback<ListAlimento> {
-            override fun onResponse(call: Call<ListAlimento>, response: Response<ListAlimento>) {
-                isLoading.value = false
-                if (response.isSuccessful) {
-                    response.body()?.let { listAlimento ->
-                        alimentoList.value = listAlimento.alimentos
-                        Log.d("HomeScreen", "Alimentos carregados: ${listAlimento.alimentos.size}")
-                    }
-                } else {
-                    errorMessage.value = "Erro ao carregar alimentos: ${response.code()}"
-                    Log.e("HomeScreen", "Erro na resposta: ${response.code()}")
-                }
-            }
-
-            override fun onFailure(call: Call<ListAlimento>, t: Throwable) {
-                isLoading.value = false
-                errorMessage.value = "Erro de conexão: ${t.message}"
-                Log.e("HomeScreen", "Erro na requisição", t)
-            }
-        })
+    // Recarregar alimentos quando voltar para a tela (detecta mudanças na navegação)
+    LaunchedEffect(navegacao?.currentBackStackEntry) {
+        if (navegacao?.currentDestination?.route == "home") {
+            carregarAlimentos()
+        }
     }
 
     Scaffold (

@@ -52,7 +52,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import br.senai.sp.jandira.mesaparceiros.R
 import br.senai.sp.jandira.mesaparceiros.model.Alimento
 import br.senai.sp.jandira.mesaparceiros.model.ResponseGeral
@@ -91,7 +90,6 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
     var quantidadeState by remember { mutableStateOf("") }
     var prazoState by remember { mutableStateOf("") }
     var pesoState by remember { mutableStateOf("") }
-    var controleNavegacao = rememberNavController()
 
     val context = LocalContext.current
     val userFile = context.getSharedPreferences("user_file", Context.MODE_PRIVATE)
@@ -380,7 +378,7 @@ fun CadastroAlimentoSegundo(navegacao: NavHostController?) {
                                 .fillMaxSize(),
                             verticalArrangement = Arrangement.Bottom
                         ){
-                            BarraInferior(controleNavegacao)
+                            BarraInferior(navegacao)
                         }
                     }
                 }

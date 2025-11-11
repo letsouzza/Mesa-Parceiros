@@ -42,7 +42,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import br.senai.sp.jandira.mesaparceiros.ui.theme.MesaParceirosTheme
 import br.senai.sp.jandira.mesaparceiros.R
 import br.senai.sp.jandira.mesaparceiros.model.Categoria
@@ -63,7 +62,6 @@ fun CadastroAlimentoPrimeiro(navegacao: NavHostController?, fromSecond: Boolean)
     var nomeState by remember { mutableStateOf("") }
     var descricao by remember { mutableStateOf("") }
     var categoria by remember { mutableStateOf("") }
-    var controleNavegacao = rememberNavController()
 
     var categoryList by remember { mutableStateOf(listOf<Categoria>()) }
 
@@ -287,7 +285,7 @@ fun CadastroAlimentoPrimeiro(navegacao: NavHostController?, fromSecond: Boolean)
                                 }
                             }
                             // Barra inferior fixa
-                            BarraInferior(controleNavegacao)
+                            BarraInferior(navegacao)
                         }
                     }
                 }
