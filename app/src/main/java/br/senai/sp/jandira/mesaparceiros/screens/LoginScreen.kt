@@ -50,7 +50,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import br.senai.sp.jandira.mesaparceiros.R
+import br.senai.sp.jandira.mesaparceiros.model.EmpresaCadastro
 import br.senai.sp.jandira.mesaparceiros.model.EmpresaLogin
+import br.senai.sp.jandira.mesaparceiros.model.ListEmpresa
 import br.senai.sp.jandira.mesaparceiros.service.RetrofitFactory
 import br.senai.sp.jandira.mesaparceiros.ui.theme.poppinsFamily
 import kotlinx.coroutines.Dispatchers
@@ -227,18 +229,67 @@ fun LoginScreen(navegacao: NavHostController?) {
 
                             GlobalScope.launch(Dispatchers.IO){
                                 try {
-
                                     val response = empresaApi.loginEmpresa(body).await()
                                     val userId = response.usuario.id.toInt()
 
-
+                                    // Persistir o ID do usuário
                                     editor.putInt("id", userId)
-                                    editor.apply()
+                                    editor.putBoolean("empresa_logada", true)
+
+                                    // Buscar dados completos da empresa por ID
+                                    empresaApi.empresaPorId(userId).enqueue(object : retrofit2.Callback<EmpresaCadastro> {
+                                        override fun onResponse(
+                                            call: retrofit2.Call<EmpresaCadastro>,
+                                            response: retrofit2.Response<EmpresaCadastro>
+                                        ) {
+                                            if (response.isSuccessful) {
+                                                response.body()?.let { empresa ->
+                                                    // Verificar se a empresa tem dados válidos
+                                                    if (empresa.id != 0 && empresa.nome.isNotBlank()) {
+                                                        // Salvar dados da empresa
+                                                        editor.putString("empresa_nome", empresa.nome)
+                                                        editor.putString("empresa_email", empresa.email)
+                                                        editor.putString("empresa_telefone", empresa.telefone)
+                                                        editor.putString("empresa_cnpj", empresa.cnpjMei)
+                                                        editor.putString("empresa_foto", empresa.foto)
+                                                        editor.commit()
+                                                    } else {
+                                                        // Buscar na lista de empresas como alternativa
+                                                        RetrofitFactory().getEmpresaService().listEmpresa().enqueue(object : retrofit2.Callback<ListEmpresa> {
+                                                            override fun onResponse(call: retrofit2.Call<ListEmpresa>, response: retrofit2.Response<ListEmpresa>) {
+                                                                if (response.isSuccessful) {
+                                                                    response.body()?.let { listEmpresa ->
+                                                                        val empresaEncontrada = listEmpresa.empresas.find { it.id == userId }
+                                                                        empresaEncontrada?.let { emp ->
+                                                                            editor.putString("empresa_nome", emp.nome)
+                                                                            editor.putString("empresa_email", emp.email)
+                                                                            editor.putString("empresa_telefone", emp.telefone)
+                                                                            editor.putString("empresa_cnpj", emp.cnpjMei)
+                                                                            editor.putString("empresa_foto", emp.foto)
+                                                                            editor.commit()
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                            override fun onFailure(call: retrofit2.Call<ListEmpresa>, t: Throwable) {
+                                                                editor.apply()
+                                                            }
+                                                        })
+                                                    }
+                                                }
+                                            } else {
+                                                editor.apply()
+                                            }
+                                        }
+
+                                        override fun onFailure(call: retrofit2.Call<EmpresaCadastro>, t: Throwable) {
+                                            editor.apply()
+                                        }
+                                    })
 
                                     // Atualizar o estado na thread principal para mostrar o AlertDialog
                                     launch(Dispatchers.Main) {
                                         mostrarMensagemSucesso = true
-                                        println("Login bem-sucedido! ID salvo: $userId")
                                     }
 
                                 } catch (e: Exception) {
@@ -293,7 +344,7 @@ fun LoginScreen(navegacao: NavHostController?) {
                 dismissButton = {
                     TextButton(
                         onClick = {
-                            navegacao!!.navigate("cadastroAlimento1")
+                            navegacao!!.navigate("home")
                         }
                     ){
                         Text(

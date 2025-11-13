@@ -1,6 +1,9 @@
 package br.senai.sp.jandira.mesaparceiros.screens
 
 import android.net.Uri
+import android.util.Log
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -16,7 +19,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +30,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,33 +54,82 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import br.senai.sp.jandira.mesaparceiros.R
+import br.senai.sp.jandira.mesaparceiros.model.AlimentoFiltro
+import br.senai.sp.jandira.mesaparceiros.model.ListAlimentoFiltro
 import br.senai.sp.jandira.mesaparceiros.screens.components.BarraInferior
 import br.senai.sp.jandira.mesaparceiros.screens.components.BarraDeTitulo
 import br.senai.sp.jandira.mesaparceiros.screens.components.CardAlimento
 import br.senai.sp.jandira.mesaparceiros.screens.components.DadosEmpresa
 import br.senai.sp.jandira.mesaparceiros.screens.components.ModalEdicaoEmpresa
+import br.senai.sp.jandira.mesaparceiros.service.RetrofitFactory
 import br.senai.sp.jandira.mesaparceiros.ui.theme.MesaParceirosTheme
 import br.senai.sp.jandira.mesaparceiros.ui.theme.backgroundLight
 import br.senai.sp.jandira.mesaparceiros.ui.theme.poppinsFamily
 import br.senai.sp.jandira.mesaparceiros.ui.theme.primaryLight
 import coil.compose.AsyncImage
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+
 
 @Composable
 fun PerfilEmpresa(navegacao: NavHostController?) {
-    var dadosEmpresa by remember {
-        mutableStateOf(
-            DadosEmpresa(
-                nome = "MC Donald's",
-                endereco = "Rua Teste, 2000 - Jardim Teste",
-                telefone = "(11) 97890-0009",
-                email = "mcDonalds@gmail.com",
-                cnpj = "05.311.244/0001-09"
-            )
-        )
-    }
+    val context = LocalContext.current
+    val prefs = context.getSharedPreferences("user_file", android.content.Context.MODE_PRIVATE)
+    
+    // Estados para os dados da empresa
+    var dadosEmpresa by remember { mutableStateOf(DadosEmpresa()) }
+    var empresaFotoUrl by remember { mutableStateOf("") }
     var imagemUri by remember { mutableStateOf<Uri?>(null) }
     var mostrarModal by remember { mutableStateOf(false) }
     var temAlteracoesPendentes by remember { mutableStateOf(false) }
+    
+    // Estados para os alimentos da empresa
+    var alimentosEmpresa by remember { mutableStateOf(listOf<AlimentoFiltro>()) }
+    var carregandoAlimentos by remember { mutableStateOf(true) }
+
+    // Carrega dados do SharedPreferences e alimentos da empresa
+    LaunchedEffect(Unit) {
+        val savedNome = prefs.getString("empresa_nome", "") ?: ""
+        val savedEmail = prefs.getString("empresa_email", "") ?: ""
+        val savedTelefone = prefs.getString("empresa_telefone", "") ?: ""
+        val savedCnpj = prefs.getString("empresa_cnpj", "") ?: ""
+        val savedFoto = prefs.getString("empresa_foto", "") ?: ""
+
+        dadosEmpresa = DadosEmpresa(
+            nome = savedNome.ifBlank { "Não possui" },
+            endereco = "Não possui",
+            telefone = savedTelefone.ifBlank { "Não possui" },
+            email = savedEmail.ifBlank { "Não possui" },
+            cnpj = savedCnpj.ifBlank { "Não possui" }
+        )
+        empresaFotoUrl = savedFoto
+        
+        // Carregar alimentos da empresa
+        val empresaId = prefs.getInt("id", 0)
+        if (empresaId > 0) {
+            RetrofitFactory().getAlimentoService().filtroEmpresa(empresaId)
+                .enqueue(object : Callback<ListAlimentoFiltro> {
+                    override fun onResponse(
+                        call: Call<ListAlimentoFiltro>,
+                        response: Response<ListAlimentoFiltro>
+                    ) {
+                        if (response.isSuccessful) {
+                            response.body()?.let { listAlimento ->
+                                alimentosEmpresa = listAlimento.resultFiltro ?: emptyList()
+                            }
+                        }
+                        carregandoAlimentos = false
+                    }
+
+                    override fun onFailure(call: Call<ListAlimentoFiltro>, t: Throwable) {
+                        carregandoAlimentos = false
+                    }
+                })
+        } else {
+            carregandoAlimentos = false
+        }
+    }
     
     val seletorImagem = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -248,22 +300,33 @@ fun PerfilEmpresa(navegacao: NavHostController?) {
                     colors = CardDefaults.cardColors(containerColor = primaryLight),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
-                    if (imagemUri != null) {
-                        AsyncImage(
-                            model = imagemUri,
-                            contentDescription = "Logo da empresa",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.Business,
-                            contentDescription = "Ícone da empresa",
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(20.dp),
-                            tint = Color.White
-                        )
+                    when {
+                        imagemUri != null -> {
+                            AsyncImage(
+                                model = imagemUri,
+                                contentDescription = "Logo da empresa",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                        empresaFotoUrl.isNotBlank() -> {
+                            AsyncImage(
+                                model = empresaFotoUrl,
+                                contentDescription = "Logo da empresa",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                        else -> {
+                            Icon(
+                                imageVector = Icons.Default.Business,
+                                contentDescription = "Ícone da empresa",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(20.dp),
+                                tint = Color.White
+                            )
+                        }
                     }
                 }
             }
@@ -293,8 +356,40 @@ fun PerfilEmpresa(navegacao: NavHostController?) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Card de exemplo de publicação
-            CardAlimento()
+            // Lista de alimentos da empresa
+            if (carregandoAlimentos) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = primaryLight)
+                }
+            } else if (alimentosEmpresa.isEmpty()) {
+                Text(
+                    text = "Nenhum alimento cadastrado",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    textAlign = TextAlign.Center,
+                    color = Color.Gray,
+                    fontFamily = poppinsFamily
+                )
+            } else {
+                // Lista de alimentos da empresa
+                alimentosEmpresa.forEach { alimento ->
+                    CardAlimento(
+                        img = alimento.imagem ?: "",
+                        nome = alimento.nome ?: "Sem nome",
+                        prazo = alimento.prazo ?: "Sem data",
+                        quantidade = alimento.quantidade ?: "0",
+                        imgEmpresa = alimento.fotoEmpresa ?: "",
+                        empresa = alimento.nomeEmpresa ?: "Sem empresa"
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
 
         }
     }

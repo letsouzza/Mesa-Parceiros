@@ -37,11 +37,11 @@ import br.senai.sp.jandira.mesaparceiros.ui.theme.poppinsFamily
 import br.senai.sp.jandira.mesaparceiros.ui.theme.primaryLight
 
 data class DadosEmpresa(
-    val nome: String,
-    val endereco: String,
-    val telefone: String,
-    val email: String,
-    val cnpj: String
+    val nome: String = "",
+    val endereco: String = "",
+    val telefone: String = "",
+    val email: String = "",
+    val cnpj: String = ""
 )
 
 @Composable
