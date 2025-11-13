@@ -59,6 +59,8 @@ import br.senai.sp.jandira.mesaparceiros.ui.theme.primaryLight
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import retrofit2.http.GET
+import retrofit2.http.Path
 
 
 // Função para formatar a data de yyyy-MM-dd para dd/MM/yy
@@ -523,7 +525,10 @@ fun HomeScreen(navegacao: NavHostController?) {
                         items(empresaList.value) { empresa ->
                             CardInstituicao(
                                 nome = empresa.nome,
-                                imagem = empresa.foto
+                                imagem = empresa.foto,
+                                onClick = {
+                                    navegacao?.navigate("instituicao/${empresa.id}")
+                                }
                             )
                         }
                     }
