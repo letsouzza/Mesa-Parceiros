@@ -50,6 +50,55 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
+// Função para converter data de DD/MM/AAAA para formato da API
+fun converterDataParaAPI(dataFormatada: String): String {
+    try {
+        // Formato atual: DD/MM/AAAA (ex: 20/09/2026)
+        val partes = dataFormatada.split("/")
+        if (partes.size == 3) {
+            val dia = partes[0].padStart(2, '0')  // Garantir 2 dígitos
+            val mes = partes[1].padStart(2, '0')  // Garantir 2 dígitos
+            val ano = partes[2]
+            
+            // Tentar formato DD-MM-AAAA primeiro (como especificado)
+            val formatoDDMMAAAA = "$dia-$mes-$ano"
+            Log.d("DropdownFiltros", "Formato DD-MM-AAAA: '$dataFormatada' -> '$formatoDDMMAAAA'")
+            
+            // Também preparar formato AAAA-MM-DD (ISO) como alternativa
+            val formatoISO = "$ano-$mes-$dia"
+            Log.d("DropdownFiltros", "Formato alternativo AAAA-MM-DD: '$formatoISO'")
+            
+            return formatoDDMMAAAA
+        }
+    } catch (e: Exception) {
+        Log.e("DropdownFiltros", "Erro ao converter data: $dataFormatada", e)
+    }
+    
+    // Fallback: apenas trocar / por -
+    val dataConvertida = dataFormatada.replace("/", "-")
+    Log.d("DropdownFiltros", "Fallback - Convertendo data: '$dataFormatada' -> '$dataConvertida'")
+    return dataConvertida
+}
+
+// Função alternativa para testar formato ISO (AAAA-MM-DD)
+fun converterDataParaFormatoISO(dataFormatada: String): String {
+    try {
+        val partes = dataFormatada.split("/")
+        if (partes.size == 3) {
+            val dia = partes[0].padStart(2, '0')
+            val mes = partes[1].padStart(2, '0')
+            val ano = partes[2]
+            
+            val formatoISO = "$ano-$mes-$dia"
+            Log.d("DropdownFiltros", "Formato ISO: '$dataFormatada' -> '$formatoISO'")
+            return formatoISO
+        }
+    } catch (e: Exception) {
+        Log.e("DropdownFiltros", "Erro ao converter para ISO: $dataFormatada", e)
+    }
+    return dataFormatada
+}
+
 // Função para formatar data com controle de cursor
 fun formatarDataComCursor(currentValue: TextFieldValue, newInput: String): TextFieldValue {
     // Se o usuário está apagando, permite apagar normalmente
@@ -89,7 +138,8 @@ fun formatarDataComCursor(currentValue: TextFieldValue, newInput: String): TextF
 @Composable
 fun DropdownFiltros(
     modifier: Modifier = Modifier,
-    onEmpresaSelecionada: (Int) -> Unit = {}
+    onEmpresaSelecionada: (Int) -> Unit = {},
+    onDataSelecionada: (String) -> Unit = {}
 ) {
     val showDropdown = remember { mutableStateOf(false) }
     val empresaList = remember { mutableStateOf(listOf<EmpresaCadastro>()) }
@@ -267,6 +317,17 @@ fun DropdownFiltros(
                         
                         Button(
                             onClick = { 
+                                if (filtroTexto.value.text.isNotBlank() && filtroTexto.value.text.length == 10) {
+                                    // Tentar formato ISO primeiro (AAAA-MM-DD)
+                                    val dataFormatoISO = converterDataParaFormatoISO(filtroTexto.value.text)
+                                    Log.d("DropdownFiltros", "Botão filtrar clicado!")
+                                    Log.d("DropdownFiltros", "Data digitada: '${filtroTexto.value.text}'")
+                                    Log.d("DropdownFiltros", "Testando formato ISO: '$dataFormatoISO'")
+                                    Log.d("DropdownFiltros", "Chamando callback onDataSelecionada...")
+                                    onDataSelecionada(dataFormatoISO)
+                                } else {
+                                    Log.w("DropdownFiltros", "Data inválida: '${filtroTexto.value.text}' (tamanho: ${filtroTexto.value.text.length})")
+                                }
                                 showDropdown.value = false
                             },
                             colors = ButtonDefaults.buttonColors(

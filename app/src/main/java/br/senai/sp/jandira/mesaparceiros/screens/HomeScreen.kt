@@ -41,6 +41,7 @@ import br.senai.sp.jandira.mesaparceiros.R
 import br.senai.sp.jandira.mesaparceiros.model.Alimento
 import br.senai.sp.jandira.mesaparceiros.model.AlimentoFiltro
 import br.senai.sp.jandira.mesaparceiros.model.Categoria
+import br.senai.sp.jandira.mesaparceiros.model.DataFiltroRequest
 import br.senai.sp.jandira.mesaparceiros.model.EmpresaCadastro
 import br.senai.sp.jandira.mesaparceiros.model.ListAlimento
 import br.senai.sp.jandira.mesaparceiros.model.ListAlimentoFiltro
@@ -100,6 +101,9 @@ fun HomeScreen(navegacao: NavHostController?) {
     }
     var empresaSelecionada = remember {
         mutableStateOf(0) // 0 = Nenhuma empresa selecionada
+    }
+    var dataSelecionada = remember {
+        mutableStateOf("") // String vazia = Nenhuma data selecionada
     }
     var isLoading = remember {
         mutableStateOf(true)
@@ -238,6 +242,69 @@ fun HomeScreen(navegacao: NavHostController?) {
         })
     }
 
+    // Função para carregar alimentos por data
+    fun carregarAlimentosPorData(data: String) {
+        isLoading.value = true
+        errorMessage.value = null
+
+        Log.d("HomeScreen", "Iniciando filtro por data: '$data'")
+        val dataFiltroRequest = DataFiltroRequest(data)
+        Log.d("HomeScreen", "DataFiltroRequest criado: ${dataFiltroRequest.data}")
+        val call = RetrofitFactory().getAlimentoService().filtroData(dataFiltroRequest)
+
+        call.enqueue(object : Callback<ListAlimentoFiltro> {
+            override fun onResponse(call: Call<ListAlimentoFiltro>, response: Response<ListAlimentoFiltro>) {
+                isLoading.value = false
+                Log.d("HomeScreen", "Resposta da API filtroData - Código: ${response.code()}")
+                Log.d("HomeScreen", "Headers da resposta: ${response.headers()}")
+                
+                if (response.isSuccessful) {
+                    response.body()?.let { listAlimentoFiltro ->
+                        Log.d("HomeScreen", "Response body recebido: $listAlimentoFiltro")
+                        Log.d("HomeScreen", "ResultFiltro: ${listAlimentoFiltro.resultFiltro}")
+                        alimentoListFiltro.value = listAlimentoFiltro.resultFiltro ?: emptyList()
+                        alimentoList.value = emptyList() // Limpar lista geral
+                        Log.d("HomeScreen", "Alimentos por data carregados: ${listAlimentoFiltro.resultFiltro?.size ?: 0}")
+                        
+                        // Log detalhado de cada alimento encontrado
+                        listAlimentoFiltro.resultFiltro?.forEachIndexed { index, alimento ->
+                            Log.d("HomeScreen", "Alimento $index: nome=${alimento.nome}, prazo=${alimento.prazo}")
+                        }
+                    } ?: run {
+                        alimentoListFiltro.value = emptyList()
+                        alimentoList.value = emptyList()
+                        Log.w("HomeScreen", "Response body é nulo")
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Log.e("HomeScreen", "Erro na resposta da API filtroData:")
+                    Log.e("HomeScreen", "Código: ${response.code()}")
+                    Log.e("HomeScreen", "Mensagem: ${response.message()}")
+                    Log.e("HomeScreen", "Error body: $errorBody")
+                    
+                    alimentoListFiltro.value = emptyList()
+                    alimentoList.value = emptyList()
+                    // Tratar 404 como "nenhum alimento disponível"
+                    if (response.code() == 404) {
+                        errorMessage.value = null
+                        Log.i("HomeScreen", "Nenhum alimento encontrado para a data (404)")
+                    } else {
+                        errorMessage.value = "Falha no carregamento"
+                        Log.e("HomeScreen", "Erro na resposta: ${response.code()}")
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call<ListAlimentoFiltro>, t: Throwable) {
+                isLoading.value = false
+                alimentoListFiltro.value = emptyList()
+                alimentoList.value = emptyList()
+                errorMessage.value = "Falha na conexão"
+                Log.e("HomeScreen", "Erro na requisição por data", t)
+            }
+        })
+    }
+
     // Carregar dados da API quando a tela for criada
     LaunchedEffect(Unit) {
         // Carregar categorias
@@ -308,7 +375,14 @@ fun HomeScreen(navegacao: NavHostController?) {
                         onEmpresaSelecionada = { empresaId ->
                             empresaSelecionada.value = empresaId
                             categoriaSelecionada.value = 0 // Reset categoria
+                            dataSelecionada.value = "" // Reset data
                             carregarAlimentosPorEmpresa(empresaId)
+                        },
+                        onDataSelecionada = { data ->
+                            dataSelecionada.value = data
+                            categoriaSelecionada.value = 0 // Reset categoria
+                            empresaSelecionada.value = 0 // Reset empresa
+                            carregarAlimentosPorData(data)
                         }
                     )
                 }
@@ -336,6 +410,7 @@ fun HomeScreen(navegacao: NavHostController?) {
                                 onClick = {
                                     categoriaSelecionada.value = 0
                                     empresaSelecionada.value = 0 // Reset empresa
+                                    dataSelecionada.value = "" // Reset data
                                     carregarAlimentos(0)
                                 },
                                 colors = ButtonDefaults.buttonColors(
@@ -357,6 +432,7 @@ fun HomeScreen(navegacao: NavHostController?) {
                                 onClick = {
                                     categoriaSelecionada.value = categoria.id
                                     empresaSelecionada.value = 0 // Reset empresa
+                                    dataSelecionada.value = "" // Reset data
                                     carregarAlimentos(categoria.id)
                                 },
                                 colors = ButtonDefaults.buttonColors(
@@ -475,8 +551,9 @@ fun HomeScreen(navegacao: NavHostController?) {
                                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                             ) {
                                 // Mostrar alimentos gerais ou filtrados
-                                if (categoriaSelecionada.value == 0 && empresaSelecionada.value == 0) {
-                                    // Mostrar todos os alimentos
+                                if (categoriaSelecionada.value == 0 && empresaSelecionada.value == 0 && dataSelecionada.value.isEmpty()) {
+                                    // Mostrar todos os alimentos (sem filtros)
+                                    Log.d("HomeScreen", "Renderizando todos os alimentos: ${alimentoList.value.size}")
                                     items(alimentoList.value) { alimento ->
                                         CardAlimento(
                                             img = alimento.imagem ?: "",
@@ -488,7 +565,9 @@ fun HomeScreen(navegacao: NavHostController?) {
                                         )
                                     }
                                 } else {
-                                    // Mostrar alimentos filtrados (por categoria ou empresa)
+                                    // Mostrar alimentos filtrados (por categoria, empresa ou data)
+                                    Log.d("HomeScreen", "Renderizando alimentos filtrados: ${alimentoListFiltro.value.size}")
+                                    Log.d("HomeScreen", "Filtros ativos - Categoria: ${categoriaSelecionada.value}, Empresa: ${empresaSelecionada.value}, Data: '${dataSelecionada.value}'")
                                     items(alimentoListFiltro.value) { alimento ->
                                         CardAlimento(
                                             img = alimento.imagem ?: "",
