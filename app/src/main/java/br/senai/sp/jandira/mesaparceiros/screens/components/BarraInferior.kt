@@ -56,7 +56,7 @@ fun BarraInferior(controleNavegacao: NavHostController?) {
         )
         NavigationBarItem(
             onClick = {
-                controleNavegacao?.navigate("perfilEmpresa")
+                controleNavegacao?.navigate("perfil")
             },
             selected = false,
             icon = {

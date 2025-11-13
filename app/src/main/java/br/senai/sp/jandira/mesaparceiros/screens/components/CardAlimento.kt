@@ -145,18 +145,6 @@ fun CardAlimento(
                     )
                 }
             }
-            
-            // Ícone do carrinho
-            IconButton(
-                onClick = {}
-            ){
-                Icon(
-                    imageVector = Icons.Default.AddShoppingCart,
-                    contentDescription = "Adicionar ao carrinho",
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
         }
     }
 }

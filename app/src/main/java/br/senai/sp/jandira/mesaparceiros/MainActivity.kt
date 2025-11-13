@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
                 val navegacao = rememberNavController()
                 NavHost(
                     navController = navegacao,
-                    startDestination = "splash"
+                    startDestination = "home"
                 ){
                     composable(route = "login"){ LoginScreen(navegacao)}
                     composable(route = "cadastro"){ CadastroEmpresa(navegacao)}
@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
                     }
                     composable(route = "cadastroAlimento2"){ CadastroAlimentoSegundo(navegacao) }
                     composable(route = "home"){ HomeScreen(navegacao) }
-                    composable(route = "perfilEmpresa"){ PerfilEmpresa(navegacao) }
+                    composable(route = "perfil"){ PerfilEmpresa(navegacao) }
                 }
             }
         }
