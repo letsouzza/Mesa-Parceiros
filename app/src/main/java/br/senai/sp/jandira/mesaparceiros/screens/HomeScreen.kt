@@ -41,7 +41,6 @@ import br.senai.sp.jandira.mesaparceiros.R
 import br.senai.sp.jandira.mesaparceiros.model.Alimento
 import br.senai.sp.jandira.mesaparceiros.model.AlimentoFiltro
 import br.senai.sp.jandira.mesaparceiros.model.Categoria
-import br.senai.sp.jandira.mesaparceiros.model.DataFiltroRequest
 import br.senai.sp.jandira.mesaparceiros.model.EmpresaCadastro
 import br.senai.sp.jandira.mesaparceiros.model.ListAlimento
 import br.senai.sp.jandira.mesaparceiros.model.ListAlimentoFiltro
@@ -60,8 +59,6 @@ import br.senai.sp.jandira.mesaparceiros.ui.theme.primaryLight
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import retrofit2.http.GET
-import retrofit2.http.Path
 
 
 // Função para formatar a data de yyyy-MM-dd para dd/MM/yy
@@ -248,16 +245,14 @@ fun HomeScreen(navegacao: NavHostController?) {
         errorMessage.value = null
 
         Log.d("HomeScreen", "Iniciando filtro por data: '$data'")
-        val dataFiltroRequest = DataFiltroRequest(data)
-        Log.d("HomeScreen", "DataFiltroRequest criado: ${dataFiltroRequest.data}")
-        val call = RetrofitFactory().getAlimentoService().filtroData(dataFiltroRequest)
+        val call = RetrofitFactory().getAlimentoService().filtroData(data)
 
         call.enqueue(object : Callback<ListAlimentoFiltro> {
             override fun onResponse(call: Call<ListAlimentoFiltro>, response: Response<ListAlimentoFiltro>) {
                 isLoading.value = false
                 Log.d("HomeScreen", "Resposta da API filtroData - Código: ${response.code()}")
                 Log.d("HomeScreen", "Headers da resposta: ${response.headers()}")
-                
+
                 if (response.isSuccessful) {
                     response.body()?.let { listAlimentoFiltro ->
                         Log.d("HomeScreen", "Response body recebido: $listAlimentoFiltro")
@@ -265,7 +260,7 @@ fun HomeScreen(navegacao: NavHostController?) {
                         alimentoListFiltro.value = listAlimentoFiltro.resultFiltro ?: emptyList()
                         alimentoList.value = emptyList() // Limpar lista geral
                         Log.d("HomeScreen", "Alimentos por data carregados: ${listAlimentoFiltro.resultFiltro?.size ?: 0}")
-                        
+
                         // Log detalhado de cada alimento encontrado
                         listAlimentoFiltro.resultFiltro?.forEachIndexed { index, alimento ->
                             Log.d("HomeScreen", "Alimento $index: nome=${alimento.nome}, prazo=${alimento.prazo}")
@@ -281,7 +276,7 @@ fun HomeScreen(navegacao: NavHostController?) {
                     Log.e("HomeScreen", "Código: ${response.code()}")
                     Log.e("HomeScreen", "Mensagem: ${response.message()}")
                     Log.e("HomeScreen", "Error body: $errorBody")
-                    
+
                     alimentoListFiltro.value = emptyList()
                     alimentoList.value = emptyList()
                     // Tratar 404 como "nenhum alimento disponível"

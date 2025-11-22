@@ -1,5 +1,6 @@
 package br.senai.sp.jandira.mesaparceiros.screens.components
 
+import android.os.Build
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -16,25 +17,34 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -49,8 +59,20 @@ import br.senai.sp.jandira.mesaparceiros.ui.theme.secondaryLight
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+import androidx.compose.ui.unit.sp
+import br.senai.sp.jandira.mesaparceiros.ui.theme.poppinsFamily
+import br.senai.sp.jandira.mesaparceiros.ui.theme.primaryLight
+import br.senai.sp.jandira.mesaparceiros.ui.theme.secondaryLight
 
-// Função para converter data de DD/MM/AAAA para formato da API
+// Função para converter data de DD/MM/AAAA para formato da API (DD-MM-YYYY)
 fun converterDataParaAPI(dataFormatada: String): String {
     try {
         // Formato atual: DD/MM/AAAA (ex: 20/09/2026)
@@ -59,44 +81,20 @@ fun converterDataParaAPI(dataFormatada: String): String {
             val dia = partes[0].padStart(2, '0')  // Garantir 2 dígitos
             val mes = partes[1].padStart(2, '0')  // Garantir 2 dígitos
             val ano = partes[2]
-            
-            // Tentar formato DD-MM-AAAA primeiro (como especificado)
+
+            // Formato DD-MM-YYYY conforme aceito pela stored procedure
             val formatoDDMMAAAA = "$dia-$mes-$ano"
-            Log.d("DropdownFiltros", "Formato DD-MM-AAAA: '$dataFormatada' -> '$formatoDDMMAAAA'")
-            
-            // Também preparar formato AAAA-MM-DD (ISO) como alternativa
-            val formatoISO = "$ano-$mes-$dia"
-            Log.d("DropdownFiltros", "Formato alternativo AAAA-MM-DD: '$formatoISO'")
-            
+            Log.d("DropdownFiltros", "Formato DD-MM-YYYY: '$dataFormatada' -> '$formatoDDMMAAAA'")
             return formatoDDMMAAAA
         }
     } catch (e: Exception) {
         Log.e("DropdownFiltros", "Erro ao converter data: $dataFormatada", e)
     }
-    
+
     // Fallback: apenas trocar / por -
     val dataConvertida = dataFormatada.replace("/", "-")
     Log.d("DropdownFiltros", "Fallback - Convertendo data: '$dataFormatada' -> '$dataConvertida'")
     return dataConvertida
-}
-
-// Função alternativa para testar formato ISO (AAAA-MM-DD)
-fun converterDataParaFormatoISO(dataFormatada: String): String {
-    try {
-        val partes = dataFormatada.split("/")
-        if (partes.size == 3) {
-            val dia = partes[0].padStart(2, '0')
-            val mes = partes[1].padStart(2, '0')
-            val ano = partes[2]
-            
-            val formatoISO = "$ano-$mes-$dia"
-            Log.d("DropdownFiltros", "Formato ISO: '$dataFormatada' -> '$formatoISO'")
-            return formatoISO
-        }
-    } catch (e: Exception) {
-        Log.e("DropdownFiltros", "Erro ao converter para ISO: $dataFormatada", e)
-    }
-    return dataFormatada
 }
 
 // Função para formatar data com controle de cursor
@@ -108,13 +106,13 @@ fun formatarDataComCursor(currentValue: TextFieldValue, newInput: String): TextF
             selection = TextRange(newInput.length)
         )
     }
-    
+
     // Remove tudo que não é dígito
     val digitsOnly = newInput.filter { it.isDigit() }
-    
+
     // Limita a 8 dígitos
     val limitedDigits = if (digitsOnly.length > 8) digitsOnly.substring(0, 8) else digitsOnly
-    
+
     val formattedText = when (limitedDigits.length) {
         0 -> ""
         1 -> limitedDigits
@@ -127,7 +125,7 @@ fun formatarDataComCursor(currentValue: TextFieldValue, newInput: String): TextF
         8 -> "${limitedDigits.substring(0, 2)}/${limitedDigits.substring(2, 4)}/${limitedDigits.substring(4)}"
         else -> limitedDigits
     }
-    
+
     // Posiciona o cursor no final do texto
     return TextFieldValue(
         text = formattedText,
@@ -135,6 +133,7 @@ fun formatarDataComCursor(currentValue: TextFieldValue, newInput: String): TextF
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DropdownFiltros(
     modifier: Modifier = Modifier,
@@ -144,14 +143,18 @@ fun DropdownFiltros(
     val showDropdown = remember { mutableStateOf(false) }
     val empresaList = remember { mutableStateOf(listOf<EmpresaCadastro>()) }
     val empresaSelecionada = remember { mutableStateOf<EmpresaCadastro?>(null) }
-    val filtroTexto = remember { mutableStateOf(TextFieldValue("")) }
     
+    // Estados para o calendário
+    val showDatePicker = remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState()
+    val dataSelecionada = remember { mutableStateOf<String?>(null) }
+
     // Carregar empresas da API
     LaunchedEffect(Unit) {
         val callEmpresa = RetrofitFactory()
             .getEmpresaService()
             .listEmpresa()
-            
+
         callEmpresa.enqueue(object : Callback<ListEmpresa> {
             override fun onResponse(call: Call<ListEmpresa>, response: Response<ListEmpresa>) {
                 if (response.isSuccessful) {
@@ -163,13 +166,13 @@ fun DropdownFiltros(
                     Log.e("DropdownFiltros", "Erro ao carregar empresas: ${response.code()}")
                 }
             }
-            
+
             override fun onFailure(call: Call<ListEmpresa>, t: Throwable) {
                 Log.e("DropdownFiltros", "Erro na requisição de empresas", t)
             }
         })
     }
-    
+
     Box(modifier = modifier) {
         Button(
             onClick = { showDropdown.value = !showDropdown.value },
@@ -191,7 +194,7 @@ fun DropdownFiltros(
                 tint = Color.Black
             )
         }
-        
+
         DropdownMenu(
             expanded = showDropdown.value,
             onDismissRequest = { showDropdown.value = false },
@@ -201,7 +204,7 @@ fun DropdownFiltros(
         ) {
             // Título Filtrar por Empresa
             DropdownMenuItem(
-                text = { 
+                text = {
                     Text(
                         text = stringResource(R.string.filtrar_por_empresa),
                         fontFamily = poppinsFamily,
@@ -212,11 +215,11 @@ fun DropdownFiltros(
                 },
                 onClick = { }
             )
-            
+
             // Lista de empresas com design melhorado
             empresaList.value.take(5).forEachIndexed { index, empresa ->
                 DropdownMenuItem(
-                    text = { 
+                    text = {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -238,26 +241,26 @@ fun DropdownFiltros(
                                     modifier = Modifier.size(14.dp)
                                 )
                             }
-                            
+
                             Spacer(modifier = Modifier.width(12.dp))
-                            
+
                             Text(
                                 text = empresa.nome,
                                 fontFamily = poppinsFamily,
                                 fontSize = 14.sp,
                                 color = Color.Black,
-                                fontWeight = if (empresaSelecionada.value?.id == empresa.id) 
+                                fontWeight = if (empresaSelecionada.value?.id == empresa.id)
                                     FontWeight.Bold else FontWeight.Normal
                             )
                         }
                     },
-                    onClick = { 
+                    onClick = {
                         empresaSelecionada.value = empresa
                         onEmpresaSelecionada(empresa.id)
                         showDropdown.value = false
                     }
                 )
-                
+
                 // Divisória entre empresas
                 if (index < empresaList.value.take(5).size - 1) {
                     Divider(
@@ -267,13 +270,13 @@ fun DropdownFiltros(
                     )
                 }
             }
-            
+
             // Espaçamento entre seções
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Título Filtrar por Data
             DropdownMenuItem(
-                text = { 
+                text = {
                     Text(
                         text = stringResource(R.string.filtrar_por_data),
                         fontFamily = poppinsFamily,
@@ -284,58 +287,53 @@ fun DropdownFiltros(
                 },
                 onClick = { }
             )
-            
-            // Campo de data com formatação automática
+
+            // Botão para selecionar data
             DropdownMenuItem(
-                text = { 
+                text = {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 8.dp)
                     ) {
-                        OutlinedTextField(
-                            value = filtroTexto.value,
-                            onValueChange = { newValue ->
-                                val formatted = formatarDataComCursor(filtroTexto.value, newValue.text)
-                                if (formatted.text.length <= 10) { // Limita a 10 caracteres (DD/MM/AAAA)
-                                    filtroTexto.value = formatted
-                                }
-                            },
-                            placeholder = { 
-                                Text(
-                                    "DD/MM/AAAA",
-                                    fontFamily = poppinsFamily,
-                                    fontSize = 14.sp,
-                                    color = Color.Gray
-                                ) 
-                            },
+                        // Botão para abrir calendário
+                        OutlinedButton(
+                            onClick = { showDatePicker.value = true },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(8.dp)
-                        )
-                        
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = dataSelecionada.value ?: "Selecionar Data",
+                                fontFamily = poppinsFamily,
+                                fontSize = 14.sp
+                            )
+                        }
+
                         Spacer(modifier = Modifier.height(12.dp))
-                        
+
+                        // Botão filtrar
                         Button(
-                            onClick = { 
-                                if (filtroTexto.value.text.isNotBlank() && filtroTexto.value.text.length == 10) {
-                                    // Tentar formato ISO primeiro (AAAA-MM-DD)
-                                    val dataFormatoISO = converterDataParaFormatoISO(filtroTexto.value.text)
+                            onClick = {
+                                dataSelecionada.value?.let { data ->
                                     Log.d("DropdownFiltros", "Botão filtrar clicado!")
-                                    Log.d("DropdownFiltros", "Data digitada: '${filtroTexto.value.text}'")
-                                    Log.d("DropdownFiltros", "Testando formato ISO: '$dataFormatoISO'")
-                                    Log.d("DropdownFiltros", "Chamando callback onDataSelecionada...")
-                                    onDataSelecionada(dataFormatoISO)
-                                } else {
-                                    Log.w("DropdownFiltros", "Data inválida: '${filtroTexto.value.text}' (tamanho: ${filtroTexto.value.text.length})")
+                                    Log.d("DropdownFiltros", "Data selecionada: '$data'")
+                                    onDataSelecionada(data)
+                                    showDropdown.value = false
                                 }
-                                showDropdown.value = false
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = secondaryLight,
                                 contentColor = Color.Black
                             ),
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp)
+                            shape = RoundedCornerShape(8.dp),
+                            enabled = dataSelecionada.value != null
                         ) {
                             Text(
                                 text = stringResource(R.string.filtrar),
@@ -349,6 +347,48 @@ fun DropdownFiltros(
                 },
                 onClick = { }
             )
+        }
+        
+        // DatePicker Dialog
+        if (showDatePicker.value) {
+            DatePickerDialog(
+                onDismissRequest = { showDatePicker.value = false },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            datePickerState.selectedDateMillis?.let { millis ->
+                                val date = Instant.ofEpochMilli(millis)
+                                    .atZone(ZoneId.systemDefault())
+                                    .toLocalDate()
+                                // Formato DD-MM-YYYY conforme aceito pela stored procedure
+                                val dataFormatada = date.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
+                                dataSelecionada.value = dataFormatada
+                                Log.d("DropdownFiltros", "Data selecionada no calendário (formato DD-MM-YYYY): $dataFormatada")
+                            }
+                            showDatePicker.value = false
+                        }
+                    ) {
+                        Text("OK")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showDatePicker.value = false }
+                    ) {
+                        Text("Cancelar")
+                    }
+                }
+            ) {
+                DatePicker(
+                    state = datePickerState,
+                    title = {
+                        Text(
+                            text = "Selecionar Data",
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                )
+            }
         }
     }
 }

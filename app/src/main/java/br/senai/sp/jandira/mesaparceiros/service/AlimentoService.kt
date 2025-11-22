@@ -12,6 +12,7 @@ import retrofit2.http.GET
 import retrofit2.http.Headers
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface AlimentoService {
 
@@ -24,9 +25,8 @@ interface AlimentoService {
     @GET("empresaAlimento/{id}")
     fun filtroEmpresa(@Path("id") id: Int): retrofit2.Call<ListAlimentoFiltro>
 
-    @Headers("Content-Type: application/json")
-    @POST("filtroData")
-    fun filtroData(@Body dataFiltro: DataFiltroRequest): retrofit2.Call<ListAlimentoFiltro>
+    @GET("filtroData")
+    fun filtroData(@Query("data") data: String): retrofit2.Call<ListAlimentoFiltro>
 
     @GET("alimentos")
     fun listAlimento(): retrofit2.Call<ListAlimento>

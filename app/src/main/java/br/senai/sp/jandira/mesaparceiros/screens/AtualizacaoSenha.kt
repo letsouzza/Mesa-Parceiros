@@ -59,13 +59,13 @@ import br.senai.sp.jandira.mesaparceiros.model.ResponseGeral
 import br.senai.sp.jandira.mesaparceiros.screens.components.BarraInferior
 import br.senai.sp.jandira.mesaparceiros.service.RetrofitFactory
 import br.senai.sp.jandira.mesaparceiros.ui.theme.poppinsFamily
+import br.senai.sp.jandira.mesaparceiros.util.Formatters
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.Response
 import retrofit2.await
-
 
 @Composable
 fun AtualizacaoSenha(navegacao: NavHostController?) {
@@ -76,6 +76,7 @@ fun AtualizacaoSenha(navegacao: NavHostController?) {
     var senhaVisivel by remember { mutableStateOf(false) }
     var novaSenhaVisivel by remember { mutableStateOf(false) }
     var mostrarMensagemSucesso by remember { mutableStateOf(false) }
+    var senhaValidation by remember { mutableStateOf(Formatters.PasswordValidationResult(false)) }
 
     val senhaApi = RetrofitFactory().getSenhaService()
 
@@ -90,9 +91,11 @@ fun AtualizacaoSenha(navegacao: NavHostController?) {
         senhasDiferentes = novaSenhaState.isNotEmpty() &&
                 confirmarSenhaState.isNotEmpty() &&
                 novaSenhaState != confirmarSenhaState
+        senhaValidation = Formatters.validatePassword(novaSenhaState)
         return novaSenhaState.isNotEmpty() &&
                 confirmarSenhaState.isNotEmpty() &&
-                novaSenhaState == confirmarSenhaState
+                novaSenhaState == confirmarSenhaState &&
+                senhaValidation.isValid
     }
 
     val scope = rememberCoroutineScope()
@@ -192,11 +195,11 @@ fun AtualizacaoSenha(navegacao: NavHostController?) {
                                     )
                                 }
 
-                                //  Ícone de alerta se senhas não coincidem
-                                if (senhasDiferentes) {
+                                //  Ícone de alerta se senhas não coincidem ou são inválidas
+                                if (senhasDiferentes || (novaSenhaState.isNotEmpty() && !senhaValidation.isValid)) {
                                     Icon(
                                         imageVector = Icons.Default.Warning,
-                                        contentDescription = "Senhas diferentes",
+                                        contentDescription = "Problema na senha",
                                         tint = Color.Red,
                                         modifier = Modifier.size(24.dp)
                                     )
@@ -205,6 +208,61 @@ fun AtualizacaoSenha(navegacao: NavHostController?) {
                         }
                     )
 
+                    //  Mensagem de erro abaixo do campo de senha
+                    if (novaSenhaState.isNotEmpty() && !senhaValidation.isValid) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                "A senha deve conter:",
+                                color = Color.Black,
+                                fontSize = 14.sp,
+                                fontFamily = poppinsFamily
+                            )
+                            Text(
+                                "• Mínimo 8 caracteres: ${if (senhaValidation.hasMinLength) "✓" else "✗"}",
+                                color = if (senhaValidation.hasMinLength) Color.Green else Color.Red,
+                                fontSize = 12.sp,
+                                fontFamily = poppinsFamily
+                            )
+                            Text(
+                                "• Pelo menos 1 letra maiúscula: ${if (senhaValidation.hasUppercase) "✓" else "✗"}",
+                                color = if (senhaValidation.hasUppercase) Color.Green else Color.Red,
+                                fontSize = 12.sp,
+                                fontFamily = poppinsFamily
+                            )
+                            Text(
+                                "• Pelo menos 1 caractere especial: ${if (senhaValidation.hasSpecialChar) "✓" else "✗"}",
+                                color = if (senhaValidation.hasSpecialChar) Color.Green else Color.Red,
+                                fontSize = 12.sp,
+                                fontFamily = poppinsFamily
+                            )
+                        }
+                    } else if (senhasDiferentes) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = "Erro",
+                                tint = Color.Red,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "As senhas digitadas não são compatíveis",
+                                color = Color.Red,
+                                fontSize = 16.sp,
+                                fontFamily = poppinsFamily,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
                     //  Campo: Confirmar Senha
                     BasicTextField(
                         value = confirmarSenhaState,
@@ -272,30 +330,6 @@ fun AtualizacaoSenha(navegacao: NavHostController?) {
                         }
                     )
 
-                    //  Mensagem de erro abaixo do segundo campo
-                    if (senhasDiferentes) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Warning,
-                                contentDescription = "Erro",
-                                tint = Color.Red,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "As senhas digitadas não são compatíveis",
-                                color = Color.Red,
-                                fontSize = 16.sp,
-                                fontFamily = poppinsFamily,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                    }
                     Button(
                         onClick = {
                             if (validarSenhas()) {
