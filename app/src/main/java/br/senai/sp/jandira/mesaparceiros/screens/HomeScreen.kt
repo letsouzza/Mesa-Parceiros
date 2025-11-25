@@ -601,13 +601,17 @@ fun HomeScreen(navegacao: NavHostController?) {
                         contentPadding = PaddingValues(horizontal = 4.dp)
                     ) {
                         items(empresaList.value) { empresa ->
-                            CardInstituicao(
-                                nome = empresa.nome,
-                                imagem = empresa.foto,
-                                onClick = {
-                                    navegacao?.navigate("instituicao/${empresa.id}")
-                                }
-                            )
+
+                            if (empresa.id != null) {
+                                CardInstituicao(
+                                    nome = empresa.nome,
+                                    imagem = empresa.foto,
+                                    onClick = {
+                                        // A navegação só será chamada se o ID for válido
+                                        navegacao?.navigate("instituicao/${empresa.id}")
+                                    }
+                                )
+                            }
                         }
                     }
                 }

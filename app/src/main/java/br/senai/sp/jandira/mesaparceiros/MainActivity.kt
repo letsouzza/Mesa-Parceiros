@@ -16,6 +16,7 @@ import br.senai.sp.jandira.mesaparceiros.screens.CadastroEmpresa
 import br.senai.sp.jandira.mesaparceiros.screens.CodigoSenha
 import br.senai.sp.jandira.mesaparceiros.screens.DetalhesScreen
 import br.senai.sp.jandira.mesaparceiros.screens.HomeScreen
+import br.senai.sp.jandira.mesaparceiros.screens.InstituicaoScreen
 import br.senai.sp.jandira.mesaparceiros.screens.LoginScreen
 import br.senai.sp.jandira.mesaparceiros.screens.PerfilEmpresa
 import br.senai.sp.jandira.mesaparceiros.screens.RecuperacaoSenha
@@ -54,6 +55,13 @@ class MainActivity : ComponentActivity() {
                     composable(route = "cadastroAlimento2"){ CadastroAlimentoSegundo(navegacao) }
                     composable(route = "home"){ HomeScreen(navegacao) }
                     composable(route = "perfil"){ PerfilEmpresa(navegacao) }
+                    composable(
+                        route = "instituicao/{empresaId}",
+                        arguments = listOf(navArgument("empresaId") { type = NavType.IntType })
+                    ) { backStackEntry ->
+                        val empresaId = backStackEntry.arguments?.getInt("empresaId") ?: 0
+                        InstituicaoScreen(navegacao, empresaId)
+                    }
                     composable(
                         route = "alimento/{alimentoId}",
                         arguments = listOf(navArgument("alimentoId") { type = NavType.IntType })
