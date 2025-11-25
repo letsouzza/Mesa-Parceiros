@@ -1,6 +1,7 @@
 package br.senai.sp.jandira.mesaparceiros.service
 
 import br.senai.sp.jandira.mesaparceiros.model.Alimento
+import br.senai.sp.jandira.mesaparceiros.model.AlimentoResponse
 import br.senai.sp.jandira.mesaparceiros.model.DataFiltroRequest
 import br.senai.sp.jandira.mesaparceiros.model.ListAlimento
 import br.senai.sp.jandira.mesaparceiros.model.ListAlimentoFiltro
@@ -30,6 +31,9 @@ interface AlimentoService {
 
     @GET("alimentos")
     fun listAlimento(): retrofit2.Call<ListAlimento>
+
+    @GET("alimento/{id}")
+    fun getAlimentoPorId(@Path("id") id: Int): retrofit2.Call<AlimentoResponse>
 
     @GET("tipoPeso")
     fun listTipoPeso(): retrofit2.Call<ListTipoPeso>

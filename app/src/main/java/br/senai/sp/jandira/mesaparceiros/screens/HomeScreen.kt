@@ -556,7 +556,9 @@ fun HomeScreen(navegacao: NavHostController?) {
                                             prazo = formatarData(alimento.prazo),
                                             quantidade = alimento.quantidade ?: "0",
                                             imgEmpresa = alimento.empresa?.foto ?: "",
-                                            empresa = alimento.empresa?.nome ?: "Empresa não informada"
+                                            empresa = alimento.empresa?.nome ?: "Empresa não informada",
+                                            alimentoId = alimento.id,
+                                            navController = navegacao
                                         )
                                     }
                                 } else {
@@ -570,7 +572,9 @@ fun HomeScreen(navegacao: NavHostController?) {
                                             prazo = formatarData(alimento.prazo),
                                             quantidade = alimento.quantidade ?: "0",
                                             imgEmpresa = alimento.fotoEmpresa ?: "",
-                                            empresa = alimento.nomeEmpresa ?: "Empresa não informada"
+                                            empresa = alimento.nomeEmpresa ?: "Empresa não informada",
+                                            alimentoId = alimento.id,
+                                            navController = navegacao
                                         )
                                     }
                                 }

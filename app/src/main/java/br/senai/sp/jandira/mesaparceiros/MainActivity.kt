@@ -14,6 +14,7 @@ import br.senai.sp.jandira.mesaparceiros.screens.CadastroAlimentoPrimeiro
 import br.senai.sp.jandira.mesaparceiros.screens.CadastroAlimentoSegundo
 import br.senai.sp.jandira.mesaparceiros.screens.CadastroEmpresa
 import br.senai.sp.jandira.mesaparceiros.screens.CodigoSenha
+import br.senai.sp.jandira.mesaparceiros.screens.DetalhesScreen
 import br.senai.sp.jandira.mesaparceiros.screens.HomeScreen
 import br.senai.sp.jandira.mesaparceiros.screens.LoginScreen
 import br.senai.sp.jandira.mesaparceiros.screens.PerfilEmpresa
@@ -53,6 +54,13 @@ class MainActivity : ComponentActivity() {
                     composable(route = "cadastroAlimento2"){ CadastroAlimentoSegundo(navegacao) }
                     composable(route = "home"){ HomeScreen(navegacao) }
                     composable(route = "perfil"){ PerfilEmpresa(navegacao) }
+                    composable(
+                        route = "alimento/{alimentoId}",
+                        arguments = listOf(navArgument("alimentoId") { type = NavType.IntType })
+                    ) { backStackEntry ->
+                        val alimentoId = backStackEntry.arguments?.getInt("alimentoId") ?: 0
+                        DetalhesScreen(navegacao, alimentoId)
+                    }
                 }
             }
         }

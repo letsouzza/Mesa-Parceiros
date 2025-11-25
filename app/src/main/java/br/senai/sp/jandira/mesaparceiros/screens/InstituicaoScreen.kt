@@ -102,11 +102,9 @@ fun InstituicaoScreen(
         RetrofitFactory().getEmpresaService().listEmpresa().enqueue(object : Callback<ListEmpresa> {
             override fun onResponse(call: Call<ListEmpresa>, response: Response<ListEmpresa>) {
                 isLoading.value = false
-                Log.d("InstituicaoScreen", "Resposta da lista de empresas - Código: ${response.code()}")
 
                 if (response.isSuccessful) {
                     response.body()?.let { listEmpresa ->
-                        Log.d("InstituicaoScreen", "Total de empresas encontradas: ${listEmpresa.empresas.size}")
 
                         // Buscar a empresa específica pelo ID
                         val empresaEncontrada = listEmpresa.empresas.find { it.id == empresaId }
@@ -115,14 +113,6 @@ fun InstituicaoScreen(
                             // Verificar se a empresa tem dados válidos
                             if (empresaEncontrada.id != 0 && empresaEncontrada.nome.isNotBlank()) {
                                 empresa.value = empresaEncontrada
-                                Log.d("InstituicaoScreen", "Empresa encontrada com sucesso:")
-                                Log.d("InstituicaoScreen", "- ID: ${empresaEncontrada.id}")
-                                Log.d("InstituicaoScreen", "- Nome: ${empresaEncontrada.nome}")
-                                Log.d("InstituicaoScreen", "- Email: ${empresaEncontrada.email}")
-                                Log.d("InstituicaoScreen", "- Telefone: ${empresaEncontrada.telefone}")
-                                Log.d("InstituicaoScreen", "- CNPJ: ${empresaEncontrada.cnpjMei}")
-                                Log.d("InstituicaoScreen", "- Endereço: ${empresaEncontrada.endereco}")
-                                Log.d("InstituicaoScreen", "- Foto: ${empresaEncontrada.foto}")
                             } else {
                                 errorMessage.value = "Empresa encontrada mas sem dados cadastrados"
                                 Log.w("InstituicaoScreen", "Empresa com ID $empresaId encontrada mas sem dados válidos")

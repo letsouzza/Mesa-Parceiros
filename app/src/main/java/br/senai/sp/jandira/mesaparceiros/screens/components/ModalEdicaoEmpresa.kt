@@ -1,5 +1,6 @@
 package br.senai.sp.jandira.mesaparceiros.screens.components
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,8 +34,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import br.senai.sp.jandira.mesaparceiros.R
+import br.senai.sp.jandira.mesaparceiros.model.EmpresaUpdate
+import br.senai.sp.jandira.mesaparceiros.model.ResponseGeral
+import br.senai.sp.jandira.mesaparceiros.service.RetrofitFactory
 import br.senai.sp.jandira.mesaparceiros.ui.theme.poppinsFamily
 import br.senai.sp.jandira.mesaparceiros.ui.theme.primaryLight
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 data class DadosEmpresa(
     val nome: String = "",
@@ -47,6 +54,7 @@ data class DadosEmpresa(
 @Composable
 fun ModalEdicaoEmpresa(
     dadosAtuais: DadosEmpresa,
+    empresaId: Int,
     onDismiss: () -> Unit,
     onAtualizar: (DadosEmpresa) -> Unit
 ) {
@@ -132,15 +140,44 @@ fun ModalEdicaoEmpresa(
                     
                     Button(
                         onClick = {
-                            onAtualizar(
-                                DadosEmpresa(
-                                    nome = nome,
-                                    endereco = endereco,
-                                    telefone = telefone,
-                                    email = email,
-                                    cnpj = cnpj
-                                )
+                            // Criar objeto de atualização
+                            val empresaUpdate = EmpresaUpdate(
+                                id = empresaId,
+                                nome = nome,
+                                email = email,
+                                senha = "", // Senha não é alterada nesta tela
+                                telefone = telefone,
+                                foto = "" // Foto será mantida como está
                             )
+                            
+                            // Chamar API de atualização
+                            RetrofitFactory().getEmpresaService().updateEmpresa(empresaId, empresaUpdate)
+                                .enqueue(object : Callback<ResponseGeral> {
+                                    override fun onResponse(
+                                        call: Call<ResponseGeral>,
+                                        response: Response<ResponseGeral>
+                                    ) {
+                                        if (response.isSuccessful) {
+                                            Log.d("ModalEdicaoEmpresa", "Empresa atualizada com sucesso")
+                                            // Notificar o componente pai sobre a atualização
+                                            onAtualizar(
+                                                DadosEmpresa(
+                                                    nome = nome,
+                                                    endereco = endereco,
+                                                    telefone = telefone,
+                                                    email = email,
+                                                    cnpj = cnpj
+                                                )
+                                            )
+                                        } else {
+                                            Log.e("ModalEdicaoEmpresa", "Erro ao atualizar empresa: ${response.code()}")
+                                        }
+                                    }
+
+                                    override fun onFailure(call: Call<ResponseGeral>, t: Throwable) {
+                                        Log.e("ModalEdicaoEmpresa", "Falha na requisição de atualização", t)
+                                    }
+                                })
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = primaryLight

@@ -55,7 +55,9 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import br.senai.sp.jandira.mesaparceiros.R
 import br.senai.sp.jandira.mesaparceiros.model.AlimentoFiltro
+import br.senai.sp.jandira.mesaparceiros.model.EmpresaUpdate
 import br.senai.sp.jandira.mesaparceiros.model.ListAlimentoFiltro
+import br.senai.sp.jandira.mesaparceiros.model.ResponseGeral
 import br.senai.sp.jandira.mesaparceiros.screens.components.BarraInferior
 import br.senai.sp.jandira.mesaparceiros.screens.components.BarraDeTitulo
 import br.senai.sp.jandira.mesaparceiros.screens.components.CardAlimento
@@ -153,8 +155,45 @@ fun PerfilEmpresa(navegacao: NavHostController?) {
                     ) {
                         Button(
                             onClick = {
-                                // TODO: Implementar salvamento das modificações
-                                temAlteracoesPendentes = false
+                                // Salvar modificações da empresa
+                                val empresaId = prefs.getInt("id", 0)
+                                if (empresaId > 0) {
+                                    val empresaUpdate = EmpresaUpdate(
+                                        id = empresaId,
+                                        nome = dadosEmpresa.nome,
+                                        email = dadosEmpresa.email,
+                                        senha = "", // Senha não é alterada nesta tela
+                                        telefone = dadosEmpresa.telefone,
+                                        foto = empresaFotoUrl
+                                    )
+                                    
+                                    RetrofitFactory().getEmpresaService().updateEmpresa(empresaId, empresaUpdate)
+                                        .enqueue(object : Callback<ResponseGeral> {
+                                            override fun onResponse(
+                                                call: Call<ResponseGeral>,
+                                                response: Response<ResponseGeral>
+                                            ) {
+                                                if (response.isSuccessful) {
+                                                    // Atualizar SharedPreferences com novos dados
+                                                    with(prefs.edit()) {
+                                                        putString("empresa_nome", dadosEmpresa.nome)
+                                                        putString("empresa_email", dadosEmpresa.email)
+                                                        putString("empresa_telefone", dadosEmpresa.telefone)
+                                                        putString("empresa_foto", empresaFotoUrl)
+                                                        apply()
+                                                    }
+                                                    temAlteracoesPendentes = false
+                                                    Log.d("PerfilEmpresa", "Empresa atualizada com sucesso")
+                                                } else {
+                                                    Log.e("PerfilEmpresa", "Erro ao atualizar empresa: ${response.code()}")
+                                                }
+                                            }
+
+                                            override fun onFailure(call: Call<ResponseGeral>, t: Throwable) {
+                                                Log.e("PerfilEmpresa", "Falha na requisição de atualização", t)
+                                            }
+                                        })
+                                }
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = primaryLight
@@ -333,13 +372,21 @@ fun PerfilEmpresa(navegacao: NavHostController?) {
             
             // Modal de edição
             if (mostrarModal) {
+                val empresaId = prefs.getInt("id", 0)
                 ModalEdicaoEmpresa(
                     dadosAtuais = dadosEmpresa,
+                    empresaId = empresaId,
                     onDismiss = { mostrarModal = false },
                     onAtualizar = { novosDados ->
                         dadosEmpresa = novosDados
                         mostrarModal = false
-                        temAlteracoesPendentes = true
+                        // Atualizar SharedPreferences imediatamente após atualização via modal
+                        with(prefs.edit()) {
+                            putString("empresa_nome", novosDados.nome)
+                            putString("empresa_email", novosDados.email)
+                            putString("empresa_telefone", novosDados.telefone)
+                            apply()
+                        }
                     }
                 )
             }

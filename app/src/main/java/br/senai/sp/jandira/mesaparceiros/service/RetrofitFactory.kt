@@ -5,7 +5,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class RetrofitFactory {
 
-    val BASE_URL = "http://192.168.0.198:8080/v1/mesa-plus/"
+    val BASE_URL = "https://mesaplus-bbh2hhheaab7f6ep.canadacentral-01.azurewebsites.net/v1/mesa-plus/"
                             // 10.107.144.28
     private val RETROFIT_FACTORY = Retrofit
         .Builder()
