@@ -78,14 +78,14 @@ import retrofit2.Response
 fun PerfilEmpresa(navegacao: NavHostController?) {
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("user_file", android.content.Context.MODE_PRIVATE)
-    
+
     // Estados para os dados da empresa
     var dadosEmpresa by remember { mutableStateOf(DadosEmpresa()) }
     var empresaFotoUrl by remember { mutableStateOf("") }
     var imagemUri by remember { mutableStateOf<Uri?>(null) }
     var mostrarModal by remember { mutableStateOf(false) }
     var temAlteracoesPendentes by remember { mutableStateOf(false) }
-    
+
     // Estados para os alimentos da empresa
     var alimentosEmpresa by remember { mutableStateOf(listOf<AlimentoFiltro>()) }
     var carregandoAlimentos by remember { mutableStateOf(true) }
@@ -96,17 +96,18 @@ fun PerfilEmpresa(navegacao: NavHostController?) {
         val savedEmail = prefs.getString("empresa_email", "") ?: ""
         val savedTelefone = prefs.getString("empresa_telefone", "") ?: ""
         val savedCnpj = prefs.getString("empresa_cnpj", "") ?: ""
+        val savedEndereco = prefs.getString("empresa_endereco", "") ?: ""
         val savedFoto = prefs.getString("empresa_foto", "") ?: ""
 
         dadosEmpresa = DadosEmpresa(
             nome = savedNome.ifBlank { "Não possui" },
-            endereco = "Não possui",
+            endereco = savedEndereco.ifBlank { "Não possui" },
             telefone = savedTelefone.ifBlank { "Não possui" },
             email = savedEmail.ifBlank { "Não possui" },
             cnpj = savedCnpj.ifBlank { "Não possui" }
         )
         empresaFotoUrl = savedFoto
-        
+
         // Carregar alimentos da empresa
         val empresaId = prefs.getInt("id", 0)
         if (empresaId > 0) {
@@ -132,7 +133,7 @@ fun PerfilEmpresa(navegacao: NavHostController?) {
             carregandoAlimentos = false
         }
     }
-    
+
     val seletorImagem = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -141,7 +142,7 @@ fun PerfilEmpresa(navegacao: NavHostController?) {
             temAlteracoesPendentes = true
         }
     }
-    
+
     Scaffold(
         topBar = { 
             Column {
@@ -164,9 +165,10 @@ fun PerfilEmpresa(navegacao: NavHostController?) {
                                         email = dadosEmpresa.email,
                                         senha = "", // Senha não é alterada nesta tela
                                         telefone = dadosEmpresa.telefone,
+                                        endereco = dadosEmpresa.endereco,
                                         foto = empresaFotoUrl
                                     )
-                                    
+
                                     RetrofitFactory().getEmpresaService().updateEmpresa(empresaId, empresaUpdate)
                                         .enqueue(object : Callback<ResponseGeral> {
                                             override fun onResponse(
@@ -179,6 +181,7 @@ fun PerfilEmpresa(navegacao: NavHostController?) {
                                                         putString("empresa_nome", dadosEmpresa.nome)
                                                         putString("empresa_email", dadosEmpresa.email)
                                                         putString("empresa_telefone", dadosEmpresa.telefone)
+                                                        putString("empresa_endereco", dadosEmpresa.endereco)
                                                         putString("empresa_foto", empresaFotoUrl)
                                                         apply()
                                                     }
@@ -248,10 +251,10 @@ fun PerfilEmpresa(navegacao: NavHostController?) {
                                 )
                             }
                         }
-                        
+
                         // Espaço para o avatar sobreposto
                         Spacer(modifier = Modifier.height(8.dp))
-                        
+
                         // Texto "Editar" abaixo da imagem
                         Text(
                             text = stringResource(id = R.string.editar),
@@ -315,7 +318,7 @@ fun PerfilEmpresa(navegacao: NavHostController?) {
                             fontSize = 16.sp
                         )
                         Divider(color = Color(0x33000000))
-                        
+
                         // Alterar senha
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
@@ -369,7 +372,7 @@ fun PerfilEmpresa(navegacao: NavHostController?) {
                     }
                 }
             }
-            
+
             // Modal de edição
             if (mostrarModal) {
                 val empresaId = prefs.getInt("id", 0)
@@ -385,6 +388,7 @@ fun PerfilEmpresa(navegacao: NavHostController?) {
                             putString("empresa_nome", novosDados.nome)
                             putString("empresa_email", novosDados.email)
                             putString("empresa_telefone", novosDados.telefone)
+                            putString("empresa_endereco", novosDados.endereco)
                             apply()
                         }
                     }

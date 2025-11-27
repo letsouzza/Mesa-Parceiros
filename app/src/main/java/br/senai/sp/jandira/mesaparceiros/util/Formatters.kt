@@ -32,7 +32,7 @@ object Formatters {
     )
 
     fun validatePassword(password: String): PasswordValidationResult {
-        val hasMinLength = password.length >= 8
+        val hasMinLength = password.length >= 10
         val hasUppercase = password.any { it.isUpperCase() }
         val hasSpecialChar = password.any { !it.isLetterOrDigit() && !it.isWhitespace() }
         

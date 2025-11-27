@@ -70,12 +70,13 @@ import retrofit2.await
 
 @Composable
 fun CadastroEmpresa(navegacao: NavHostController?) {
-    
+
 
     var nameState by remember { mutableStateOf("") }
     var emailState by remember { mutableStateOf("") }
     var cnpjState by remember { mutableStateOf("") }
     var telefoneState by remember { mutableStateOf("") }
+    var enderecoState by remember { mutableStateOf("") }
     var telefoneValue by remember { mutableStateOf(TextFieldValue("")) }
     var senhaState by remember { mutableStateOf(TextFieldValue("")) }
     var senhaVisivel by remember { mutableStateOf(false) }
@@ -83,13 +84,13 @@ fun CadastroEmpresa(navegacao: NavHostController?) {
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     val scope = rememberCoroutineScope()
-    
+
     // Evita que o teclado abra automaticamente
     DisposableEffect(Unit) {
         keyboardController?.hide()
         onDispose {}
     }
-    
+
     LaunchedEffect(telefoneState) {
         telefoneValue = TextFieldValue(
             text = Formatters.formatPhoneNumber(telefoneState),
@@ -100,8 +101,9 @@ fun CadastroEmpresa(navegacao: NavHostController?) {
     var isEmailError by remember { mutableStateOf(false) }
     var isCnpjError by remember { mutableStateOf(false) }
     var isTelefoneError by remember { mutableStateOf(false) }
-    var senhaValidation by remember { 
-        mutableStateOf(Formatters.PasswordValidationResult(false)) 
+    var isEnderecoError by remember { mutableStateOf(false) }
+    var senhaValidation by remember {
+        mutableStateOf(Formatters.PasswordValidationResult(false))
     }
 
     var mostrarMensagemSucesso by remember { mutableStateOf(false) }
@@ -113,9 +115,10 @@ fun CadastroEmpresa(navegacao: NavHostController?) {
         isEmailError = !Patterns.EMAIL_ADDRESS.matcher(emailState).matches()
         isCnpjError = cnpjState.filter { it.isDigit() }.length != 14
         isTelefoneError = telefoneState.filter { it.isDigit() }.length !in 10..11
+        isEnderecoError = enderecoState.isBlank()
         senhaValidation = Formatters.validatePassword(senhaState.text)
-        
-        return !isNomeError && !isEmailError && !isCnpjError && !isTelefoneError && senhaValidation.isValid
+
+        return !isNomeError && !isEmailError && !isCnpjError && !isTelefoneError && !isEnderecoError && senhaValidation.isValid
     }
 
     Box(
@@ -235,14 +238,14 @@ fun CadastroEmpresa(navegacao: NavHostController?) {
                     )
                     Spacer(Modifier.padding(5.dp))
                     var cnpjValue by remember { mutableStateOf(TextFieldValue("")) }
-                    
+
                     LaunchedEffect(cnpjState) {
                         cnpjValue = TextFieldValue(
                             text = Formatters.formatCnpj(cnpjState),
                             selection = TextRange(Formatters.formatCnpj(cnpjState).length)
                         )
                     }
-                    
+
                     OutlinedTextField(
                         value = cnpjValue,
                         onValueChange = { newValue ->
@@ -345,7 +348,44 @@ fun CadastroEmpresa(navegacao: NavHostController?) {
 
                     )
                     Spacer(Modifier.padding(5.dp))
-                    
+                    OutlinedTextField(
+                        value = enderecoState,
+                        onValueChange = { it ->
+                            enderecoState = it
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedContainerColor = Color(0xFFFFFFFF),
+                            focusedContainerColor = Color(0xFFFFFFFF),
+                            unfocusedBorderColor = Color(0xFF1B4227),
+                            focusedBorderColor = Color(0xFF1B4227),
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                        label = {
+                            Text(
+                                text = "Endereço",
+                                fontSize = 20.sp,
+                                fontFamily = poppinsFamily,
+                                color = Color(0x99000000)
+                            )
+                        },
+                        isError = isEnderecoError,
+                        supportingText = {
+                            if(isEnderecoError){
+                                Text(text = "Endereço é obrigatório")
+                            }
+                        },
+                        trailingIcon = {
+                            if(isEnderecoError){
+                                Icon(imageVector = Icons.Default.Info, contentDescription = "")
+                            }
+                        },
+                        modifier = Modifier
+                            .width(315.dp)
+
+                    )
+                    Spacer(Modifier.padding(5.dp))
                     // Campo de senha simplificado
                     OutlinedTextField(
                         value = senhaState.text,
@@ -390,7 +430,7 @@ fun CadastroEmpresa(navegacao: NavHostController?) {
                         isError = senhaState.text.isNotEmpty() && !senhaValidation.isValid,
                         singleLine = true
                     )
-                    
+
                     // Mensagens de validação da senha (fora do TextField para evitar mudanças de layout)
                     if (senhaState.text.isNotEmpty()) {
                         Column(
@@ -400,7 +440,7 @@ fun CadastroEmpresa(navegacao: NavHostController?) {
                         ) {
                             Text("A senha deve conter:")
                             Text(
-                                "• Mínimo 8 caracteres: ${if (senhaValidation.hasMinLength) "✓" else "✗"}",
+                                "• Mínimo 10 caracteres: ${if (senhaValidation.hasMinLength) "✓" else "✗"}",
                                 color = if (senhaValidation.hasMinLength) Color.Green else Color.Red,
                                 fontSize = 12.sp
                             )
@@ -437,7 +477,8 @@ fun CadastroEmpresa(navegacao: NavHostController?) {
                                     email = emailState,
                                     senha = senhaState.text,
                                     cnpjMei = cnpjState,
-                                    telefone = telefoneState
+                                    telefone = telefoneState,
+                                    endereco = enderecoState
                                 )
 
                                 GlobalScope.launch(Dispatchers.IO){

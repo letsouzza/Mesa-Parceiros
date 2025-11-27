@@ -251,6 +251,7 @@ fun LoginScreen(navegacao: NavHostController?) {
                                                         editor.putString("empresa_email", empresa.email)
                                                         editor.putString("empresa_telefone", empresa.telefone)
                                                         editor.putString("empresa_cnpj", empresa.cnpjMei)
+                                                        editor.putString("empresa_endereco", empresa.endereco)
                                                         editor.putString("empresa_foto", empresa.foto)
                                                         editor.commit()
                                                     } else {
@@ -265,6 +266,7 @@ fun LoginScreen(navegacao: NavHostController?) {
                                                                             editor.putString("empresa_email", emp.email)
                                                                             editor.putString("empresa_telefone", emp.telefone)
                                                                             editor.putString("empresa_cnpj", emp.cnpjMei)
+                                                                            editor.putString("empresa_endereco", emp.endereco)
                                                                             editor.putString("empresa_foto", emp.foto)
                                                                             editor.commit()
                                                                         }

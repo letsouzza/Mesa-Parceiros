@@ -8,5 +8,6 @@ data class EmpresaUpdate(
     var email: String = "",
     var senha: String = "",
     var telefone: String = "",
+    var endereco: String? = null,
     var foto: String = ""
 )
